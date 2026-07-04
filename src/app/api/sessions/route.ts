@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
         name,
         searchQuery,
         description: description || null,
-        templateId: templateId || null,
         outboundChannel: outboundChannel || "email",
+        ...(templateId ? { template: { connect: { id: templateId } } } : {}),
       },
     });
 
