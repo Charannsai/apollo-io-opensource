@@ -38,7 +38,9 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
 
   const [form, setForm] = useState({
+    ai_provider: "gemini",
     gemini_api_key: "",
+    groq_api_key: "",
     gemini_model: "gemini-2.0-flash",
     apify_api_key: "",
     gmail_client_id: "",
@@ -175,39 +177,96 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className={labelClasses}>Gemini API Key</label>
-            <div className="relative">
-              <input
-                type={showKeys.gemini_api_key ? "text" : "password"}
-                value={form.gemini_api_key}
-                onChange={(e) => updateField("gemini_api_key", e.target.value)}
-                placeholder="Enter your Gemini API key"
-                className={cn(inputClasses, "pr-10")}
-              />
-              <button
-                type="button"
-                onClick={() => toggleKeyVisibility("gemini_api_key")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
-              >
-                {showKeys.gemini_api_key ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
+            <label className={labelClasses}>AI Provider</label>
+            <select
+              value={form.ai_provider}
+              onChange={(e) => {
+                const prov = e.target.value;
+                const defModel = prov === "groq" ? "llama-3.3-70b-versatile" : "gemini-2.5-flash";
+                setForm(prev => ({
+                  ...prev,
+                  ai_provider: prov,
+                  gemini_model: defModel
+                }));
+              }}
+              className={inputClasses}
+            >
+              <option value="gemini">Google Gemini (AI Studio)</option>
+              <option value="groq">Groq Console (Llama / Gemma)</option>
+            </select>
           </div>
 
+          {form.ai_provider === "groq" ? (
+            <div>
+              <label className={labelClasses}>Groq API Key</label>
+              <div className="relative">
+                <input
+                  type={showKeys.groq_api_key ? "text" : "password"}
+                  value={form.groq_api_key}
+                  onChange={(e) => updateField("groq_api_key", e.target.value)}
+                  placeholder="gsk_..."
+                  className={cn(inputClasses, "pr-10")}
+                />
+                <button
+                  type="button"
+                  onClick={() => toggleKeyVisibility("groq_api_key")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+                >
+                  {showKeys.groq_api_key ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className={labelClasses}>Gemini API Key</label>
+              <div className="relative">
+                <input
+                  type={showKeys.gemini_api_key ? "text" : "password"}
+                  value={form.gemini_api_key}
+                  onChange={(e) => updateField("gemini_api_key", e.target.value)}
+                  placeholder="AIzaSy..."
+                  className={cn(inputClasses, "pr-10")}
+                />
+                <button
+                  type="button"
+                  onClick={() => toggleKeyVisibility("gemini_api_key")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+                >
+                  {showKeys.gemini_api_key ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div>
-            <label className={labelClasses}>Gemini Model</label>
+            <label className={labelClasses}>Active Model</label>
             <select
               value={form.gemini_model}
               onChange={(e) => updateField("gemini_model", e.target.value)}
               className={inputClasses}
             >
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+              {form.ai_provider === "groq" ? (
+                <>
+                  <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Recommended)</option>
+                  <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Ultra Fast)</option>
+                  <option value="gemma2-9b-it">Gemma 2 9B IT</option>
+                  <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+                </>
+              ) : (
+                <>
+                  <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended)</option>
+                  <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                </>
+              )}
             </select>
           </div>
         </motion.section>
