@@ -1,6 +1,16 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import path from "node:path";
 
-const prisma = new PrismaClient();
+const dbPath = path.join(process.cwd(), "data", "outreach.db");
+const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
+
+// Dynamic import to resolve from the correct path
+async function getSeedClient() {
+  const { PrismaClient } = await import(
+    path.join(process.cwd(), "src", "generated", "prisma", "client.ts")
+  );
+  return new PrismaClient({ adapter });
+}
 
 const defaultTemplates = [
   {
