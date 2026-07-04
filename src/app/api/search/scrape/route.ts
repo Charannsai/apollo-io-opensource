@@ -85,8 +85,9 @@ async function runApifyScrape(apiKey: string, query: any) {
   const role = query?.role || "Software Engineer";
   const location = query?.location || "Remote";
 
-  // Formulate a smart Google search query targeting Greenhouse, Lever, and Workable remote engineering job listings
-  const searchQuery = `site:greenhouse.io OR site:lever.co "${role}" "${location}" hiring`;
+  // Broaden the search query to ensure we get plenty of organic Google Search results.
+  // The qualification engine will then filter them based on the specific location constraints.
+  const searchQuery = `site:greenhouse.io OR site:lever.co "${role}" "remote" hiring`;
 
   // Start the Apify Google Search Scraper actor
   const runResponse = await fetch(
@@ -144,8 +145,10 @@ async function runApifyScrape(apiKey: string, query: any) {
   const items = await itemsRes.json();
   // Filter and pick organic search results
   const searchResults = (items[0]?.organicResults || []).slice(0, 8);
+  console.log(`[Apify Scrape] Discovered ${searchResults.length} organic search results for query: "${searchQuery}"`);
 
   if (searchResults.length === 0) {
+    console.warn("[Apify Scrape] No organic results returned, falling back to mock leads.");
     return [];
   }
 
