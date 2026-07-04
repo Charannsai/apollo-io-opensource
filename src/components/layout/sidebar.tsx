@@ -83,14 +83,14 @@ export function Sidebar() {
               className={cn(
                 "group flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150",
                 isActive
-                  ? "bg-neutral-100/80 dark:bg-white/[0.06] text-neutral-900 dark:text-neutral-50"
-                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 hover:bg-neutral-50 dark:hover:bg-white/[0.02]"
+                  ? "bg-sidebar-active text-text-primary"
+                  : "text-text-secondary hover:text-text-primary hover:bg-sidebar-hover"
               )}
             >
               <item.icon
                 className={cn(
                   "w-4 h-4 shrink-0 transition-colors",
-                  isActive ? "text-neutral-950 dark:text-neutral-50" : "text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-600 dark:group-hover:text-neutral-300"
+                  isActive ? "text-text-primary" : "text-text-tertiary group-hover:text-text-secondary"
                 )}
               />
               <AnimatePresence>
@@ -117,13 +117,13 @@ export function Sidebar() {
           onClick={toggleTheme}
           className={cn(
             "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150",
-            "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 hover:bg-neutral-50 dark:hover:bg-white/[0.02]"
+            "text-text-secondary hover:text-text-primary hover:bg-sidebar-hover"
           )}
         >
           {resolvedTheme === "dark" ? (
-            <Sun className="w-4 h-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+            <Sun className="w-4 h-4 shrink-0 text-text-tertiary" />
           ) : (
-            <Moon className="w-4 h-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+            <Moon className="w-4 h-4 shrink-0 text-text-tertiary" />
           )}
           <AnimatePresence>
             {!collapsed && (
@@ -144,13 +144,13 @@ export function Sidebar() {
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
             "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150",
-            "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-50 hover:bg-neutral-50 dark:hover:bg-white/[0.02]"
+            "text-text-secondary hover:text-text-primary hover:bg-sidebar-hover"
           )}
         >
           {collapsed ? (
-            <ChevronRight className="w-4 h-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+            <ChevronRight className="w-4 h-4 shrink-0 text-text-tertiary" />
           ) : (
-            <ChevronLeft className="w-4 h-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+            <ChevronLeft className="w-4 h-4 shrink-0 text-text-tertiary" />
           )}
           <AnimatePresence>
             {!collapsed && (
