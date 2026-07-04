@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTemplates, useDeleteTemplate } from "@/hooks/use-templates";
 import { PageHeader } from "@/components/common/page-header";
+import { Modal } from "@/components/common/modal";
 import { StatusBadge } from "@/components/common/status-badge";
 import { EmptyState } from "@/components/common/empty-state";
 import Link from "next/link";
@@ -36,9 +37,10 @@ const fadeUp = {
 };
 
 export default function TemplatesPage() {
-  const { data: templates, isLoading } = useTemplates();
+  const { data: templates = [], isLoading } = useTemplates();
   const deleteTemplate = useDeleteTemplate();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
 
   return (
     <div>
@@ -150,9 +152,7 @@ export default function TemplatesPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             setActiveMenu(null);
-                            if (confirm("Delete this template?")) {
-                              deleteTemplate.mutate(template.id);
-                            }
+                            setDeleteTemplateId(template.id);
                           }}
                           className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
                         >
@@ -174,6 +174,20 @@ export default function TemplatesPage() {
           description="Templates will be seeded automatically when the database is initialized."
         />
       )}
+
+      <Modal
+        isOpen={deleteTemplateId !== null}
+        onClose={() => setDeleteTemplateId(null)}
+        onConfirm={() => {
+          if (deleteTemplateId) {
+            deleteTemplate.mutate(deleteTemplateId);
+          }
+        }}
+        title="Delete Template"
+        description="Are you sure you want to delete this template? This action cannot be undone."
+        confirmText="Delete"
+        isDanger={true}
+      />
     </div>
   );
 }
