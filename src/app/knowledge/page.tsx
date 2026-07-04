@@ -9,6 +9,7 @@ import {
   useDeleteKnowledgeEntry,
 } from "@/hooks/use-knowledge";
 import { PageHeader } from "@/components/common/page-header";
+import { Modal } from "@/components/common/modal";
 import {
   BookOpen,
   Plus,
@@ -58,6 +59,7 @@ export default function KnowledgePage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newValue, setNewValue] = useState("");
+  const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null);
   
   // Resume Import Modal state
   const [showResumeModal, setShowResumeModal] = useState(false);
@@ -266,9 +268,7 @@ export default function KnowledgePage() {
                   </div>
                   <button
                     onClick={() => {
-                      if (confirm("Delete this entry?")) {
-                        deleteEntry.mutate(entry.id);
-                      }
+                      setDeleteEntryId(entry.id);
                     }}
                     className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-50 hover:text-danger-500 dark:hover:bg-danger-500/10 text-text-tertiary transition-all shrink-0"
                   >
@@ -416,6 +416,20 @@ export default function KnowledgePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Modal
+        isOpen={deleteEntryId !== null}
+        onClose={() => setDeleteEntryId(null)}
+        onConfirm={() => {
+          if (deleteEntryId) {
+            deleteEntry.mutate(deleteEntryId);
+          }
+        }}
+        title="Delete Knowledge Entry"
+        description="Are you sure you want to delete this knowledge base entry? This will prevent AI tools from utilizing this context in future email generation."
+        confirmText="Delete"
+        isDanger={true}
+      />
     </motion.div>
   );
 }
