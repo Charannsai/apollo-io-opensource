@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const apifyKeySetting = await prisma.settings.findUnique({ where: { key: "apify_api_key" } });
     const apifyKey = apifyKeySetting?.value || process.env.APIFY_API_KEY || "";
 
-    let leads = [];
+    let leads: any[] = [];
 
     if (apifyKey && apifyKey.length > 5) {
       try {
@@ -42,24 +42,37 @@ export async function POST(request: NextRequest) {
       leads = generateMockLeads(analyzedQuery);
     }
 
-    // Sanitize and filter leads to ensure only quality leads are stored!
-    const role = analyzedQuery?.role || "Software Engineer";
-    const verifiedLeads = sanitizeAndFilterLeads(leads, role);
+    // De-duplicate against leads already in database (across all sessions)
+    const existingLeads = await prisma.lead.findMany({
+      select: { companyName: true, companyWebsite: true, contactEmail: true }
+    });
+    const existingKeys = new Set(
+      existingLeads.map(l => `${(l.companyName || "").toLowerCase().trim()}|${(l.contactEmail || "").toLowerCase().trim()}`)
+    );
+
+    const deduplicatedLeads = leads.filter(lead => {
+      const key = `${(lead.companyName || "").toLowerCase().trim()}|${(lead.contactEmail || "").toLowerCase().trim()}`;
+      if (existingKeys.has(key)) return false;
+      existingKeys.add(key); // Also dedup within current batch
+      return true;
+    });
+
+    console.log(`[Scrape] ${leads.length} raw leads → ${deduplicatedLeads.length} after dedup`);
 
     // Save leads to database under this session
-    const leadCreations = verifiedLeads.map((lead: any) => 
+    const leadCreations = deduplicatedLeads.map((lead: any) => 
       prisma.lead.create({
         data: {
           sessionId,
           companyName: lead.companyName,
           companyWebsite: lead.companyWebsite,
-          companySize: lead.companySize || "50-200",
+          companySize: lead.companySize || "Unknown",
           industry: lead.industry || "Technology",
           location: lead.location || "Remote",
           contactName: lead.contactName,
           contactEmail: lead.contactEmail,
           contactTitle: lead.contactTitle,
-          contactLinkedin: lead.contactLinkedin || `https://linkedin.com/company/${lead.companyName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+          contactLinkedin: lead.contactLinkedin || null,
           source: apifyKey ? "apify" : "mock_discovery",
           pipelineStage: "generated",
           rawData: JSON.stringify(lead)
@@ -74,24 +87,34 @@ export async function POST(request: NextRequest) {
       where: { id: sessionId },
       data: { 
         status: "qualifying",
-        totalLeads: verifiedLeads.length
+        totalLeads: deduplicatedLeads.length
       }
     });
 
-    return NextResponse.json({ success: true, count: verifiedLeads.length });
+    return NextResponse.json({ success: true, count: deduplicatedLeads.length });
   } catch (error) {
     console.error("Scrape API error:", error);
     return NextResponse.json({ error: "Lead discovery failed" }, { status: 500 });
   }
 }
 
+// ============================================
+// Multi-Query Apify Scraper with AI Extraction
+// ============================================
+
 async function runApifyScrape(apiKey: string, query: any) {
   const role = query?.role || "Software Engineer";
   const location = query?.location || "Remote";
 
-  // Broaden the search query to ensure we get plenty of organic Google Search results.
-  // The qualification engine will then filter them based on the specific location constraints.
-  const searchQuery = `site:greenhouse.io OR site:lever.co "${role}" "remote" hiring`;
+  // Build multiple diverse search queries to maximize coverage
+  const searchQueries = [
+    `site:greenhouse.io "${role}" "${location}" hiring`,
+    `site:lever.co "${role}" "${location}" hiring`,
+    `site:ashbyhq.com "${role}" "${location}"`,
+    `"${role}" hiring remote careers apply -linkedin.com -indeed.com -glassdoor.com`,
+  ].join("\n");
+
+  console.log(`[Apify Scrape] Launching multi-query scrape for: "${role}" (${location})`);
 
   // Start the Apify Google Search Scraper actor
   const runResponse = await fetch(
@@ -100,9 +123,9 @@ async function runApifyScrape(apiKey: string, query: any) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        queries: searchQuery,
+        queries: searchQueries,
         maxPagesPerQuery: 1,
-        resultsPerPage: 25,
+        resultsPerPage: 15,
         countryCode: "us"
       })
     }
@@ -116,9 +139,9 @@ async function runApifyScrape(apiKey: string, query: any) {
   const runId = runData.data.id;
   const datasetId = runData.data.defaultDatasetId;
 
-  // Poll actor status for up to 90 seconds
+  // Poll actor status for up to 120 seconds
   let isFinished = false;
-  for (let i = 0; i < 18; i++) {
+  for (let i = 0; i < 24; i++) {
     await new Promise((resolve) => setTimeout(resolve, 5000));
     const statusRes = await fetch(
       `https://api.apify.com/v2/actor-runs/${runId}?token=${apiKey}`
@@ -138,7 +161,7 @@ async function runApifyScrape(apiKey: string, query: any) {
     throw new Error("Apify actor run timed out");
   }
 
-  // Fetch dataset items
+  // Fetch dataset items (multiple pages of results)
   const itemsRes = await fetch(
     `https://api.apify.com/v2/datasets/${datasetId}/items?token=${apiKey}`
   );
@@ -147,187 +170,167 @@ async function runApifyScrape(apiKey: string, query: any) {
   }
 
   const items = await itemsRes.json();
-  // Filter and pick organic search results
-  const searchResults = (items[0]?.organicResults || []).slice(0, 25);
-  console.log(`[Apify Scrape] Discovered ${searchResults.length} organic search results for query: "${searchQuery}"`);
 
-  if (searchResults.length === 0) {
+  // Merge organic results from all query pages
+  const allOrganicResults: any[] = [];
+  for (const page of items) {
+    const organics = page?.organicResults || [];
+    allOrganicResults.push(...organics);
+  }
+
+  console.log(`[Apify Scrape] Discovered ${allOrganicResults.length} total organic search results across all queries`);
+
+  if (allOrganicResults.length === 0) {
     console.warn("[Apify Scrape] No organic results returned, falling back to mock leads.");
     return [];
   }
 
-  // Use Gemini/Groq to parse the search results into company leads
+  // De-duplicate raw search results by URL
+  const seenUrls = new Set<string>();
+  const uniqueResults = allOrganicResults.filter(r => {
+    const url = (r.url || "").toLowerCase();
+    if (seenUrls.has(url)) return false;
+    seenUrls.add(url);
+    return true;
+  }).slice(0, 30);
+
+  // Use Gemini to intelligently extract REAL company data from search results
   const gemini = await getGeminiClient().catch(() => null);
   if (!gemini) {
-    return parseSearchResultsManually(searchResults, role);
+    return parseSearchResultsManually(uniqueResults, role);
   }
 
-  const parsePrompt = `You are a recruitment database parsing tool. Convert this array of job search result listings into a JSON array of company lead opportunities.
+  const parsePrompt = `You are a lead data extraction tool. Parse these Google search results into structured company leads.
+
+CRITICAL RULES:
+1. ONLY extract REAL data that is visible in the search results. 
+2. Extract the REAL company name from the job listing title/URL (e.g. "Software Engineer at Notion" → companyName: "Notion")
+3. Extract the REAL company domain from the URL:
+   - If URL is like "boards.greenhouse.io/notion/..." → companyWebsite: "https://notion.so" (use your knowledge of the company)
+   - If URL is like "jobs.lever.co/mixpanel/..." → companyWebsite: "https://mixpanel.com"
+   - If URL contains the actual company domain, use that directly
+4. For contactEmail: construct "careers@companydomain.com" or "jobs@companydomain.com" (these are honest generic emails)
+5. For contactName: write "Hiring Team" (do NOT fabricate individual names)
+6. For contactTitle: write "Recruitment Team - ${role}" (do NOT fabricate specific person titles)
+7. For location: extract from the listing if visible, otherwise write "Remote"
+8. For industry: infer from company name and description if possible
+9. SKIP any result that doesn't clearly contain a company name or job listing
+
 Search Results:
-${JSON.stringify(searchResults.map((r: any) => ({ title: r.title, url: r.url, description: r.description })))}
+${JSON.stringify(uniqueResults.map((r: any) => ({ title: r.title, url: r.url, description: r.description })), null, 2)}
 
 Target Role: ${role}
 
-Extract or generate the following fields:
-- companyName: Name of the hiring company (extract from title/description)
-- companyWebsite: Likely website domain (e.g., "companyname.com")
-- location: Remote status or office location
-- industry: General industry
-- contactName: Generate a highly realistic HR / Recruitment / Engineering Manager name
-- contactEmail: Generate a highly realistic contact email (e.g., "first.last@domain.com" or "careers@domain.com")
-- contactTitle: Generate a realistic contact title (e.g. "Technical Recruiter", "VP of Engineering")
-
-Respond strictly with a JSON array in the following format (no markdown formatting blocks, no prefix/suffix):
+Respond with ONLY a JSON array (no markdown, no code blocks):
 [
   {
-    "companyName": "Extract company name from listing",
-    "companyWebsite": "https://companydomain.com",
-    "location": "Remote status",
-    "industry": "General industry",
-    "contactName": "First Last (Generate realistic name)",
-    "contactEmail": "contact@companydomain.com (Generate realistic email)",
-    "contactTitle": "Realistic hiring title (e.g. Technical Recruiter)"
+    "companyName": "Real Company Name",
+    "companyWebsite": "https://realcompany.com",
+    "location": "Location from listing or Remote",
+    "industry": "Inferred industry",
+    "contactName": "Hiring Team",
+    "contactEmail": "careers@realcompany.com",
+    "contactTitle": "Recruitment Team - ${role}",
+    "contactLinkedin": "https://linkedin.com/company/realcompanyname"
   }
 ]`;
 
-  const parsedText = await gemini.generateContent(parsePrompt, "Convert search listings to structured JSON.");
+  const parsedText = await gemini.generateContent(parsePrompt, "Extract REAL company data from search results. Never fabricate information.");
   try {
     const parsed = safeParseJson(parsedText, null);
-    if (!parsed) throw new Error("Parsed content returned null");
-    return parsed;
+    if (!parsed || !Array.isArray(parsed)) throw new Error("Parsed content returned null or non-array");
+    
+    // Post-process: validate each lead has a real company name and domain
+    const validated = parsed.filter((lead: any) => {
+      if (!lead.companyName || lead.companyName.length < 2) return false;
+      if (!lead.companyWebsite || lead.companyWebsite.includes("greenhouse.io") || lead.companyWebsite.includes("lever.co")) {
+        // Try to reconstruct domain from company name
+        const clean = lead.companyName.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (clean.length < 2) return false;
+        lead.companyWebsite = `https://${clean}.com`;
+        lead.contactEmail = `careers@${clean}.com`;
+      }
+      return true;
+    });
+
+    console.log(`[Apify Scrape] AI extracted ${validated.length} validated leads from ${uniqueResults.length} search results`);
+    return validated;
   } catch (err) {
     console.error("Failed to parse scraped company JSON, falling back manually:", err);
-    return parseSearchResultsManually(searchResults, role);
+    return parseSearchResultsManually(uniqueResults, role);
   }
 }
 
 function parseSearchResultsManually(results: any[], role: string) {
-  // Manual fallback parse if AI is offline
-  return results.map((item, idx) => {
-    let companyName = "Hiring Partner";
-    if (item.title) {
-      const parts = item.title.split("-");
-      if (parts.length > 1) companyName = parts[1].trim();
-      else companyName = item.title.split("at")[1]?.trim().split(" ")[0] || "Tech Co";
+  const leads: any[] = [];
+  
+  for (const item of results) {
+    const url = (item.url || "").toLowerCase();
+    const title = item.title || "";
+
+    // Extract company name from Greenhouse/Lever/Ashby URLs
+    let companySlug = "";
+    if (url.includes("greenhouse.io/")) {
+      const match = url.match(/greenhouse\.io\/([a-z0-9-]+)/);
+      if (match) companySlug = match[1];
+    } else if (url.includes("lever.co/")) {
+      const match = url.match(/lever\.co\/([a-z0-9-]+)/);
+      if (match) companySlug = match[1];
+    } else if (url.includes("ashbyhq.com/")) {
+      const match = url.match(/ashbyhq\.com\/([a-z0-9-]+)/);
+      if (match) companySlug = match[1];
+    }
+    
+    // Also try extracting from title: "Role at CompanyName"
+    let companyName = "";
+    if (companySlug) {
+      // Capitalize slug: "my-company" → "My Company"
+      companyName = companySlug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    } else {
+      const atMatch = title.match(/(?:at|@)\s+(.+?)(?:\s*[-|]|$)/i);
+      if (atMatch) {
+        companyName = atMatch[1].trim();
+      } else {
+        const dashParts = title.split("-");
+        if (dashParts.length > 1) {
+          companyName = dashParts[dashParts.length - 1].trim();
+        }
+      }
     }
 
-    const domain = `${companyName.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`;
+    if (!companyName || companyName.length < 2) continue;
+    
+    // Skip generic names
+    const lower = companyName.toLowerCase();
+    if (["greenhouse", "lever", "ashby", "indeed", "linkedin", "glassdoor"].some(g => lower.includes(g))) continue;
 
-    return {
+    const domain = companyName.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
+
+    leads.push({
       companyName,
       companyWebsite: `https://${domain}`,
-      companySize: "50-200",
+      companySize: "Unknown",
       industry: "Technology",
-      location: "Remote everywhere",
-      contactName: `Recruiter Lead ${idx + 1}`,
+      location: "Remote",
+      contactName: "Hiring Team",
       contactEmail: `careers@${domain}`,
-      contactTitle: `Recruitment Partner - ${role}`,
-    };
-  });
-}
-
-function sanitizeAndFilterLeads(rawLeads: any[], role: string): any[] {
-  const qualityLeads: any[] = [];
-  const genericDomains = [
-    "linkedin.com", "indeed.com", "greenhouse.io", "lever.co", 
-    "glassdoor.com", "upwork.com", "google.com", "apify.com", 
-    "weworkremotely.com", "remote.co", "flexjobs.com"
-  ];
-
-  for (const lead of rawLeads) {
-    let companyName = (lead.companyName || "").trim();
-    if (!companyName) continue;
-
-    // Filter out obviously low-quality/anonymous listings
-    const lowerName = companyName.toLowerCase();
-    if (
-      lowerName.includes("confidential") ||
-      lowerName.includes("anonymous") ||
-      lowerName.includes("hiring partner") ||
-      lowerName.includes("recruiting agency") ||
-      lowerName.includes("technical agency") ||
-      lowerName.includes("tech co") ||
-      lowerName === "unknown"
-    ) {
-      continue;
-    }
-
-    // Sanitize/Reconstruct Company Website
-    let website = (lead.companyWebsite || "").trim().toLowerCase();
-    
-    // Clean protocol prefix
-    if (website && !website.startsWith("http://") && !website.startsWith("https://")) {
-      website = `https://${website}`;
-    }
-
-    let isGenericOrEmpty = !website || genericDomains.some(gd => website.includes(gd));
-    
-    if (isGenericOrEmpty) {
-      // Reconstruct domain from company name
-      const cleanName = companyName.toLowerCase().replace(/[^a-z0-9]/g, "");
-      if (cleanName.length > 1) {
-        website = `https://${cleanName}.com`;
-      } else {
-        continue; // Drop if we can't extract a valid company name
-      }
-    } else {
-      // Clean path, query, and anchor params from original URL
-      try {
-        const urlObj = new URL(website);
-        website = `${urlObj.protocol}//${urlObj.hostname}`;
-      } catch {
-        // If URL parsing fails, reconstruct using company name
-        const cleanName = companyName.toLowerCase().replace(/[^a-z0-9]/g, "");
-        website = `https://${cleanName}.com`;
-      }
-    }
-
-    // Extract domain part for emails (e.g. "https://company.com" -> "company.com")
-    let domain = "company.com";
-    try {
-      const urlObj = new URL(website);
-      domain = urlObj.hostname.replace("www.", "");
-    } catch {
-      domain = companyName.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
-    }
-
-    // Ensure contact details are present and quality
-    const contactName = (lead.contactName || "").trim() || `Hiring Team`;
-    
-    // Sanitize or generate contact email to match company domain
-    let email = (lead.contactEmail || "").trim().toLowerCase();
-    const isGenericEmail = !email || email.includes("@gmail.") || email.includes("@yahoo.") || email.includes("@outlook.") || genericDomains.some(gd => email.includes(gd));
-    
-    if (isGenericEmail) {
-      // Convert name to email prefix e.g. "Jane Doe" -> "jane.doe@company.com"
-      const prefix = contactName.toLowerCase()
-        .replace(/[^a-z\s]/g, "")
-        .trim()
-        .replace(/\s+/g, ".");
-      email = prefix ? `${prefix}@${domain}` : `careers@${domain}`;
-    }
-
-    const contactTitle = (lead.contactTitle || "").trim() || `Technical Recruiter - ${role}`;
-
-    qualityLeads.push({
-      companyName,
-      companyWebsite: website,
-      companySize: lead.companySize || "50-200",
-      industry: lead.industry || "Technology",
-      location: lead.location || "Remote",
-      contactName,
-      contactEmail: email,
-      contactTitle,
-      contactLinkedin: lead.contactLinkedin || `https://linkedin.com/company/${companyName.toLowerCase().replace(/[^a-z0-9]/g, "")}`
+      contactTitle: `Recruitment Team - ${role}`,
+      contactLinkedin: `https://linkedin.com/company/${companyName.toLowerCase().replace(/[^a-z0-9]/g, "")}`
     });
   }
 
-  return qualityLeads;
+  // Deduplicate by company name
+  const seen = new Set<string>();
+  return leads.filter(l => {
+    const key = l.companyName.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function generateMockLeads(query: any) {
   const role = query?.role || "Software Engineer";
-  const location = query?.location || "Remote";
   
   return [
     {
@@ -336,10 +339,10 @@ function generateMockLeads(query: any) {
       companySize: "50-100",
       industry: "SaaS / Project Management",
       location: "Fully Remote",
-      contactName: "Tuomas Artman",
-      contactEmail: "tuomas@linear.app",
-      contactTitle: "Co-Founder & CTO",
-      contactLinkedin: "https://linkedin.com/in/artman"
+      contactName: "Hiring Team",
+      contactEmail: "careers@linear.app",
+      contactTitle: `Recruitment Team - ${role}`,
+      contactLinkedin: "https://linkedin.com/company/linear"
     },
     {
       companyName: "Vercel",
@@ -347,10 +350,10 @@ function generateMockLeads(query: any) {
       companySize: "250-500",
       industry: "Cloud Infrastructure",
       location: "Global Remote",
-      contactName: "Guillermo Rauch",
-      contactEmail: "rauchg@vercel.com",
-      contactTitle: "CEO",
-      contactLinkedin: "https://linkedin.com/in/rauchg"
+      contactName: "Hiring Team",
+      contactEmail: "careers@vercel.com",
+      contactTitle: `Recruitment Team - ${role}`,
+      contactLinkedin: "https://linkedin.com/company/vercel"
     },
     {
       companyName: "Supabase",
@@ -358,10 +361,10 @@ function generateMockLeads(query: any) {
       companySize: "50-100",
       industry: "Database & Backend SaaS",
       location: "Remote Everywhere",
-      contactName: "Paul Copplestone",
-      contactEmail: "paul@supabase.io",
-      contactTitle: "CEO & Co-Founder",
-      contactLinkedin: "https://linkedin.com/in/copplestone"
+      contactName: "Hiring Team",
+      contactEmail: "careers@supabase.com",
+      contactTitle: `Recruitment Team - ${role}`,
+      contactLinkedin: "https://linkedin.com/company/supabase"
     },
     {
       companyName: "Railway",
@@ -369,36 +372,32 @@ function generateMockLeads(query: any) {
       companySize: "10-50",
       industry: "Cloud Hosting",
       location: "Remote, India friendly",
-      contactName: "Jake Cooper",
-      contactEmail: "jake@railway.app",
-      contactTitle: "CTO & Co-Founder",
-      contactLinkedin: "https://linkedin.com/in/jake-cooper"
+      contactName: "Hiring Team",
+      contactEmail: "careers@railway.app",
+      contactTitle: `Recruitment Team - ${role}`,
+      contactLinkedin: "https://linkedin.com/company/railway"
     },
     {
       companyName: "Prisma",
       companyWebsite: "https://prisma.io",
       companySize: "50-150",
       industry: "Database Tooling",
-      location: "Fully Remote (GMT+8 to GMT-5)",
-      contactName: "Søren Bendixsen",
-      contactEmail: "bendixsen@prisma.io",
-      contactTitle: "Head of Engineering",
-      contactLinkedin: "https://linkedin.com/in/sorenbendixsen"
+      location: "Fully Remote",
+      contactName: "Hiring Team",
+      contactEmail: "careers@prisma.io",
+      contactTitle: `Recruitment Team - ${role}`,
+      contactLinkedin: "https://linkedin.com/company/prisma"
     },
     {
       companyName: "GitLab",
       companyWebsite: "https://gitlab.com",
       companySize: "1000-2000",
       industry: "DevOps",
-      location: "Remote everywhere (India candidates welcome)",
-      contactName: "Sid Sijbrandij",
-      contactEmail: "sid@gitlab.com",
-      contactTitle: "CEO",
-      contactLinkedin: "https://linkedin.com/in/sidsijbrandij"
+      location: "Remote everywhere",
+      contactName: "Hiring Team",
+      contactEmail: "careers@gitlab.com",
+      contactTitle: `Recruitment Team - ${role}`,
+      contactLinkedin: "https://linkedin.com/company/gitlab"
     }
-  ].map((lead: any) => ({
-    ...lead,
-    contactTitle: lead.contactTitle || `Hiring Manager - ${role}`,
-    industry: lead.industry || "Technology",
-  }));
+  ];
 }
