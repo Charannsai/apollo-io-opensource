@@ -647,10 +647,6 @@ export type TemplateUpdateOneWithoutSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TemplateUpdateToOneWithWhereWithoutSessionsInput, Prisma.TemplateUpdateWithoutSessionsInput>, Prisma.TemplateUncheckedUpdateWithoutSessionsInput>
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type TemplateCreateWithoutSessionsInput = {
   id?: string
   name: string

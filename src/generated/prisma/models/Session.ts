@@ -45,6 +45,7 @@ export type SessionMinAggregateOutputType = {
   description: string | null
   status: string | null
   templateId: string | null
+  outboundChannel: string | null
   totalLeads: number | null
   emailsSent: number | null
   repliesCount: number | null
@@ -59,6 +60,7 @@ export type SessionMaxAggregateOutputType = {
   description: string | null
   status: string | null
   templateId: string | null
+  outboundChannel: string | null
   totalLeads: number | null
   emailsSent: number | null
   repliesCount: number | null
@@ -73,6 +75,7 @@ export type SessionCountAggregateOutputType = {
   description: number
   status: number
   templateId: number
+  outboundChannel: number
   totalLeads: number
   emailsSent: number
   repliesCount: number
@@ -101,6 +104,7 @@ export type SessionMinAggregateInputType = {
   description?: true
   status?: true
   templateId?: true
+  outboundChannel?: true
   totalLeads?: true
   emailsSent?: true
   repliesCount?: true
@@ -115,6 +119,7 @@ export type SessionMaxAggregateInputType = {
   description?: true
   status?: true
   templateId?: true
+  outboundChannel?: true
   totalLeads?: true
   emailsSent?: true
   repliesCount?: true
@@ -129,6 +134,7 @@ export type SessionCountAggregateInputType = {
   description?: true
   status?: true
   templateId?: true
+  outboundChannel?: true
   totalLeads?: true
   emailsSent?: true
   repliesCount?: true
@@ -230,6 +236,7 @@ export type SessionGroupByOutputType = {
   description: string | null
   status: string
   templateId: string | null
+  outboundChannel: string
   totalLeads: number
   emailsSent: number
   repliesCount: number
@@ -267,6 +274,7 @@ export type SessionWhereInput = {
   description?: Prisma.StringNullableFilter<"Session"> | string | null
   status?: Prisma.StringFilter<"Session"> | string
   templateId?: Prisma.StringNullableFilter<"Session"> | string | null
+  outboundChannel?: Prisma.StringFilter<"Session"> | string
   totalLeads?: Prisma.IntFilter<"Session"> | number
   emailsSent?: Prisma.IntFilter<"Session"> | number
   repliesCount?: Prisma.IntFilter<"Session"> | number
@@ -283,6 +291,7 @@ export type SessionOrderByWithRelationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   templateId?: Prisma.SortOrderInput | Prisma.SortOrder
+  outboundChannel?: Prisma.SortOrder
   totalLeads?: Prisma.SortOrder
   emailsSent?: Prisma.SortOrder
   repliesCount?: Prisma.SortOrder
@@ -302,6 +311,7 @@ export type SessionWhereUniqueInput = Prisma.AtLeast<{
   description?: Prisma.StringNullableFilter<"Session"> | string | null
   status?: Prisma.StringFilter<"Session"> | string
   templateId?: Prisma.StringNullableFilter<"Session"> | string | null
+  outboundChannel?: Prisma.StringFilter<"Session"> | string
   totalLeads?: Prisma.IntFilter<"Session"> | number
   emailsSent?: Prisma.IntFilter<"Session"> | number
   repliesCount?: Prisma.IntFilter<"Session"> | number
@@ -318,6 +328,7 @@ export type SessionOrderByWithAggregationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   templateId?: Prisma.SortOrderInput | Prisma.SortOrder
+  outboundChannel?: Prisma.SortOrder
   totalLeads?: Prisma.SortOrder
   emailsSent?: Prisma.SortOrder
   repliesCount?: Prisma.SortOrder
@@ -340,6 +351,7 @@ export type SessionScalarWhereWithAggregatesInput = {
   description?: Prisma.StringNullableWithAggregatesFilter<"Session"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"Session"> | string
   templateId?: Prisma.StringNullableWithAggregatesFilter<"Session"> | string | null
+  outboundChannel?: Prisma.StringWithAggregatesFilter<"Session"> | string
   totalLeads?: Prisma.IntWithAggregatesFilter<"Session"> | number
   emailsSent?: Prisma.IntWithAggregatesFilter<"Session"> | number
   repliesCount?: Prisma.IntWithAggregatesFilter<"Session"> | number
@@ -353,6 +365,7 @@ export type SessionCreateInput = {
   searchQuery: string
   description?: string | null
   status?: string
+  outboundChannel?: string
   totalLeads?: number
   emailsSent?: number
   repliesCount?: number
@@ -369,6 +382,7 @@ export type SessionUncheckedCreateInput = {
   description?: string | null
   status?: string
   templateId?: string | null
+  outboundChannel?: string
   totalLeads?: number
   emailsSent?: number
   repliesCount?: number
@@ -383,6 +397,7 @@ export type SessionUpdateInput = {
   searchQuery?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  outboundChannel?: Prisma.StringFieldUpdateOperationsInput | string
   totalLeads?: Prisma.IntFieldUpdateOperationsInput | number
   emailsSent?: Prisma.IntFieldUpdateOperationsInput | number
   repliesCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -399,6 +414,7 @@ export type SessionUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  outboundChannel?: Prisma.StringFieldUpdateOperationsInput | string
   totalLeads?: Prisma.IntFieldUpdateOperationsInput | number
   emailsSent?: Prisma.IntFieldUpdateOperationsInput | number
   repliesCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -414,6 +430,7 @@ export type SessionCreateManyInput = {
   description?: string | null
   status?: string
   templateId?: string | null
+  outboundChannel?: string
   totalLeads?: number
   emailsSent?: number
   repliesCount?: number
@@ -427,6 +444,7 @@ export type SessionUpdateManyMutationInput = {
   searchQuery?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  outboundChannel?: Prisma.StringFieldUpdateOperationsInput | string
   totalLeads?: Prisma.IntFieldUpdateOperationsInput | number
   emailsSent?: Prisma.IntFieldUpdateOperationsInput | number
   repliesCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -441,6 +459,7 @@ export type SessionUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  outboundChannel?: Prisma.StringFieldUpdateOperationsInput | string
   totalLeads?: Prisma.IntFieldUpdateOperationsInput | number
   emailsSent?: Prisma.IntFieldUpdateOperationsInput | number
   repliesCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -455,6 +474,7 @@ export type SessionCountOrderByAggregateInput = {
   description?: Prisma.SortOrder
   status?: Prisma.SortOrder
   templateId?: Prisma.SortOrder
+  outboundChannel?: Prisma.SortOrder
   totalLeads?: Prisma.SortOrder
   emailsSent?: Prisma.SortOrder
   repliesCount?: Prisma.SortOrder
@@ -475,6 +495,7 @@ export type SessionMaxOrderByAggregateInput = {
   description?: Prisma.SortOrder
   status?: Prisma.SortOrder
   templateId?: Prisma.SortOrder
+  outboundChannel?: Prisma.SortOrder
   totalLeads?: Prisma.SortOrder
   emailsSent?: Prisma.SortOrder
   repliesCount?: Prisma.SortOrder
@@ -489,6 +510,7 @@ export type SessionMinOrderByAggregateInput = {
   description?: Prisma.SortOrder
   status?: Prisma.SortOrder
   templateId?: Prisma.SortOrder
+  outboundChannel?: Prisma.SortOrder
   totalLeads?: Prisma.SortOrder
   emailsSent?: Prisma.SortOrder
   repliesCount?: Prisma.SortOrder
@@ -599,6 +621,7 @@ export type SessionCreateWithoutLeadsInput = {
   searchQuery: string
   description?: string | null
   status?: string
+  outboundChannel?: string
   totalLeads?: number
   emailsSent?: number
   repliesCount?: number
@@ -614,6 +637,7 @@ export type SessionUncheckedCreateWithoutLeadsInput = {
   description?: string | null
   status?: string
   templateId?: string | null
+  outboundChannel?: string
   totalLeads?: number
   emailsSent?: number
   repliesCount?: number
@@ -643,6 +667,7 @@ export type SessionUpdateWithoutLeadsInput = {
   searchQuery?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  outboundChannel?: Prisma.StringFieldUpdateOperationsInput | string
   totalLeads?: Prisma.IntFieldUpdateOperationsInput | number
   emailsSent?: Prisma.IntFieldUpdateOperationsInput | number
   repliesCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -658,6 +683,7 @@ export type SessionUncheckedUpdateWithoutLeadsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  outboundChannel?: Prisma.StringFieldUpdateOperationsInput | string
   totalLeads?: Prisma.IntFieldUpdateOperationsInput | number
   emailsSent?: Prisma.IntFieldUpdateOperationsInput | number
   repliesCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -671,6 +697,7 @@ export type SessionCreateWithoutTemplateInput = {
   searchQuery: string
   description?: string | null
   status?: string
+  outboundChannel?: string
   totalLeads?: number
   emailsSent?: number
   repliesCount?: number
@@ -685,6 +712,7 @@ export type SessionUncheckedCreateWithoutTemplateInput = {
   searchQuery: string
   description?: string | null
   status?: string
+  outboundChannel?: string
   totalLeads?: number
   emailsSent?: number
   repliesCount?: number
@@ -728,6 +756,7 @@ export type SessionScalarWhereInput = {
   description?: Prisma.StringNullableFilter<"Session"> | string | null
   status?: Prisma.StringFilter<"Session"> | string
   templateId?: Prisma.StringNullableFilter<"Session"> | string | null
+  outboundChannel?: Prisma.StringFilter<"Session"> | string
   totalLeads?: Prisma.IntFilter<"Session"> | number
   emailsSent?: Prisma.IntFilter<"Session"> | number
   repliesCount?: Prisma.IntFilter<"Session"> | number
@@ -741,6 +770,7 @@ export type SessionCreateManyTemplateInput = {
   searchQuery: string
   description?: string | null
   status?: string
+  outboundChannel?: string
   totalLeads?: number
   emailsSent?: number
   repliesCount?: number
@@ -754,6 +784,7 @@ export type SessionUpdateWithoutTemplateInput = {
   searchQuery?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  outboundChannel?: Prisma.StringFieldUpdateOperationsInput | string
   totalLeads?: Prisma.IntFieldUpdateOperationsInput | number
   emailsSent?: Prisma.IntFieldUpdateOperationsInput | number
   repliesCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -768,6 +799,7 @@ export type SessionUncheckedUpdateWithoutTemplateInput = {
   searchQuery?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  outboundChannel?: Prisma.StringFieldUpdateOperationsInput | string
   totalLeads?: Prisma.IntFieldUpdateOperationsInput | number
   emailsSent?: Prisma.IntFieldUpdateOperationsInput | number
   repliesCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -782,6 +814,7 @@ export type SessionUncheckedUpdateManyWithoutTemplateInput = {
   searchQuery?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  outboundChannel?: Prisma.StringFieldUpdateOperationsInput | string
   totalLeads?: Prisma.IntFieldUpdateOperationsInput | number
   emailsSent?: Prisma.IntFieldUpdateOperationsInput | number
   repliesCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -827,6 +860,7 @@ export type SessionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   description?: boolean
   status?: boolean
   templateId?: boolean
+  outboundChannel?: boolean
   totalLeads?: boolean
   emailsSent?: boolean
   repliesCount?: boolean
@@ -844,6 +878,7 @@ export type SessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   description?: boolean
   status?: boolean
   templateId?: boolean
+  outboundChannel?: boolean
   totalLeads?: boolean
   emailsSent?: boolean
   repliesCount?: boolean
@@ -859,6 +894,7 @@ export type SessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   description?: boolean
   status?: boolean
   templateId?: boolean
+  outboundChannel?: boolean
   totalLeads?: boolean
   emailsSent?: boolean
   repliesCount?: boolean
@@ -874,6 +910,7 @@ export type SessionSelectScalar = {
   description?: boolean
   status?: boolean
   templateId?: boolean
+  outboundChannel?: boolean
   totalLeads?: boolean
   emailsSent?: boolean
   repliesCount?: boolean
@@ -881,7 +918,7 @@ export type SessionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "searchQuery" | "description" | "status" | "templateId" | "totalLeads" | "emailsSent" | "repliesCount" | "createdAt" | "updatedAt", ExtArgs["result"]["session"]>
+export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "searchQuery" | "description" | "status" | "templateId" | "outboundChannel" | "totalLeads" | "emailsSent" | "repliesCount" | "createdAt" | "updatedAt", ExtArgs["result"]["session"]>
 export type SessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   leads?: boolean | Prisma.Session$leadsArgs<ExtArgs>
   template?: boolean | Prisma.Session$templateArgs<ExtArgs>
@@ -907,6 +944,7 @@ export type $SessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     description: string | null
     status: string
     templateId: string | null
+    outboundChannel: string
     totalLeads: number
     emailsSent: number
     repliesCount: number
@@ -1343,6 +1381,7 @@ export interface SessionFieldRefs {
   readonly description: Prisma.FieldRef<"Session", 'String'>
   readonly status: Prisma.FieldRef<"Session", 'String'>
   readonly templateId: Prisma.FieldRef<"Session", 'String'>
+  readonly outboundChannel: Prisma.FieldRef<"Session", 'String'>
   readonly totalLeads: Prisma.FieldRef<"Session", 'Int'>
   readonly emailsSent: Prisma.FieldRef<"Session", 'Int'>
   readonly repliesCount: Prisma.FieldRef<"Session", 'Int'>

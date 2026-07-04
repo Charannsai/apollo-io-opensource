@@ -49,6 +49,7 @@ export type LeadMinAggregateOutputType = {
   source: string | null
   qualificationScore: number | null
   qualificationReason: string | null
+  applyDirect: boolean | null
   pipelineStage: string | null
   rawData: string | null
   createdAt: Date | null
@@ -70,6 +71,7 @@ export type LeadMaxAggregateOutputType = {
   source: string | null
   qualificationScore: number | null
   qualificationReason: string | null
+  applyDirect: boolean | null
   pipelineStage: string | null
   rawData: string | null
   createdAt: Date | null
@@ -91,6 +93,7 @@ export type LeadCountAggregateOutputType = {
   source: number
   qualificationScore: number
   qualificationReason: number
+  applyDirect: number
   pipelineStage: number
   rawData: number
   createdAt: number
@@ -122,6 +125,7 @@ export type LeadMinAggregateInputType = {
   source?: true
   qualificationScore?: true
   qualificationReason?: true
+  applyDirect?: true
   pipelineStage?: true
   rawData?: true
   createdAt?: true
@@ -143,6 +147,7 @@ export type LeadMaxAggregateInputType = {
   source?: true
   qualificationScore?: true
   qualificationReason?: true
+  applyDirect?: true
   pipelineStage?: true
   rawData?: true
   createdAt?: true
@@ -164,6 +169,7 @@ export type LeadCountAggregateInputType = {
   source?: true
   qualificationScore?: true
   qualificationReason?: true
+  applyDirect?: true
   pipelineStage?: true
   rawData?: true
   createdAt?: true
@@ -272,6 +278,7 @@ export type LeadGroupByOutputType = {
   source: string | null
   qualificationScore: number | null
   qualificationReason: string | null
+  applyDirect: boolean
   pipelineStage: string
   rawData: string | null
   createdAt: Date
@@ -316,6 +323,7 @@ export type LeadWhereInput = {
   source?: Prisma.StringNullableFilter<"Lead"> | string | null
   qualificationScore?: Prisma.FloatNullableFilter<"Lead"> | number | null
   qualificationReason?: Prisma.StringNullableFilter<"Lead"> | string | null
+  applyDirect?: Prisma.BoolFilter<"Lead"> | boolean
   pipelineStage?: Prisma.StringFilter<"Lead"> | string
   rawData?: Prisma.StringNullableFilter<"Lead"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Lead"> | Date | string
@@ -340,6 +348,7 @@ export type LeadOrderByWithRelationInput = {
   source?: Prisma.SortOrderInput | Prisma.SortOrder
   qualificationScore?: Prisma.SortOrderInput | Prisma.SortOrder
   qualificationReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  applyDirect?: Prisma.SortOrder
   pipelineStage?: Prisma.SortOrder
   rawData?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -367,6 +376,7 @@ export type LeadWhereUniqueInput = Prisma.AtLeast<{
   source?: Prisma.StringNullableFilter<"Lead"> | string | null
   qualificationScore?: Prisma.FloatNullableFilter<"Lead"> | number | null
   qualificationReason?: Prisma.StringNullableFilter<"Lead"> | string | null
+  applyDirect?: Prisma.BoolFilter<"Lead"> | boolean
   pipelineStage?: Prisma.StringFilter<"Lead"> | string
   rawData?: Prisma.StringNullableFilter<"Lead"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Lead"> | Date | string
@@ -391,6 +401,7 @@ export type LeadOrderByWithAggregationInput = {
   source?: Prisma.SortOrderInput | Prisma.SortOrder
   qualificationScore?: Prisma.SortOrderInput | Prisma.SortOrder
   qualificationReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  applyDirect?: Prisma.SortOrder
   pipelineStage?: Prisma.SortOrder
   rawData?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -420,6 +431,7 @@ export type LeadScalarWhereWithAggregatesInput = {
   source?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
   qualificationScore?: Prisma.FloatNullableWithAggregatesFilter<"Lead"> | number | null
   qualificationReason?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
+  applyDirect?: Prisma.BoolWithAggregatesFilter<"Lead"> | boolean
   pipelineStage?: Prisma.StringWithAggregatesFilter<"Lead"> | string
   rawData?: Prisma.StringNullableWithAggregatesFilter<"Lead"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Lead"> | Date | string
@@ -440,6 +452,7 @@ export type LeadCreateInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -464,6 +477,7 @@ export type LeadUncheckedCreateInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -486,6 +500,7 @@ export type LeadUpdateInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -510,6 +525,7 @@ export type LeadUncheckedUpdateInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -533,6 +549,7 @@ export type LeadCreateManyInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -553,6 +570,7 @@ export type LeadUpdateManyMutationInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -574,6 +592,7 @@ export type LeadUncheckedUpdateManyInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -605,6 +624,7 @@ export type LeadCountOrderByAggregateInput = {
   source?: Prisma.SortOrder
   qualificationScore?: Prisma.SortOrder
   qualificationReason?: Prisma.SortOrder
+  applyDirect?: Prisma.SortOrder
   pipelineStage?: Prisma.SortOrder
   rawData?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -630,6 +650,7 @@ export type LeadMaxOrderByAggregateInput = {
   source?: Prisma.SortOrder
   qualificationScore?: Prisma.SortOrder
   qualificationReason?: Prisma.SortOrder
+  applyDirect?: Prisma.SortOrder
   pipelineStage?: Prisma.SortOrder
   rawData?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -651,6 +672,7 @@ export type LeadMinOrderByAggregateInput = {
   source?: Prisma.SortOrder
   qualificationScore?: Prisma.SortOrder
   qualificationReason?: Prisma.SortOrder
+  applyDirect?: Prisma.SortOrder
   pipelineStage?: Prisma.SortOrder
   rawData?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -716,6 +738,10 @@ export type NullableFloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type LeadCreateNestedOneWithoutEmailsInput = {
   create?: Prisma.XOR<Prisma.LeadCreateWithoutEmailsInput, Prisma.LeadUncheckedCreateWithoutEmailsInput>
   connectOrCreate?: Prisma.LeadCreateOrConnectWithoutEmailsInput
@@ -758,6 +784,7 @@ export type LeadCreateWithoutSessionInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -780,6 +807,7 @@ export type LeadUncheckedCreateWithoutSessionInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -831,6 +859,7 @@ export type LeadScalarWhereInput = {
   source?: Prisma.StringNullableFilter<"Lead"> | string | null
   qualificationScore?: Prisma.FloatNullableFilter<"Lead"> | number | null
   qualificationReason?: Prisma.StringNullableFilter<"Lead"> | string | null
+  applyDirect?: Prisma.BoolFilter<"Lead"> | boolean
   pipelineStage?: Prisma.StringFilter<"Lead"> | string
   rawData?: Prisma.StringNullableFilter<"Lead"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Lead"> | Date | string
@@ -851,6 +880,7 @@ export type LeadCreateWithoutEmailsInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -874,6 +904,7 @@ export type LeadUncheckedCreateWithoutEmailsInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -911,6 +942,7 @@ export type LeadUpdateWithoutEmailsInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -934,6 +966,7 @@ export type LeadUncheckedUpdateWithoutEmailsInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -955,6 +988,7 @@ export type LeadCreateWithoutRepliesInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -978,6 +1012,7 @@ export type LeadUncheckedCreateWithoutRepliesInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -1015,6 +1050,7 @@ export type LeadUpdateWithoutRepliesInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1038,6 +1074,7 @@ export type LeadUncheckedUpdateWithoutRepliesInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1059,6 +1096,7 @@ export type LeadCreateManySessionInput = {
   source?: string | null
   qualificationScore?: number | null
   qualificationReason?: string | null
+  applyDirect?: boolean
   pipelineStage?: string
   rawData?: string | null
   createdAt?: Date | string
@@ -1079,6 +1117,7 @@ export type LeadUpdateWithoutSessionInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1101,6 +1140,7 @@ export type LeadUncheckedUpdateWithoutSessionInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1123,6 +1163,7 @@ export type LeadUncheckedUpdateManyWithoutSessionInput = {
   source?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qualificationScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   qualificationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  applyDirect?: Prisma.BoolFieldUpdateOperationsInput | boolean
   pipelineStage?: Prisma.StringFieldUpdateOperationsInput | string
   rawData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1184,6 +1225,7 @@ export type LeadSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   source?: boolean
   qualificationScore?: boolean
   qualificationReason?: boolean
+  applyDirect?: boolean
   pipelineStage?: boolean
   rawData?: boolean
   createdAt?: boolean
@@ -1209,6 +1251,7 @@ export type LeadSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   source?: boolean
   qualificationScore?: boolean
   qualificationReason?: boolean
+  applyDirect?: boolean
   pipelineStage?: boolean
   rawData?: boolean
   createdAt?: boolean
@@ -1231,6 +1274,7 @@ export type LeadSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   source?: boolean
   qualificationScore?: boolean
   qualificationReason?: boolean
+  applyDirect?: boolean
   pipelineStage?: boolean
   rawData?: boolean
   createdAt?: boolean
@@ -1253,13 +1297,14 @@ export type LeadSelectScalar = {
   source?: boolean
   qualificationScore?: boolean
   qualificationReason?: boolean
+  applyDirect?: boolean
   pipelineStage?: boolean
   rawData?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type LeadOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "companyName" | "companyWebsite" | "companySize" | "industry" | "location" | "contactName" | "contactEmail" | "contactTitle" | "contactLinkedin" | "source" | "qualificationScore" | "qualificationReason" | "pipelineStage" | "rawData" | "createdAt" | "updatedAt", ExtArgs["result"]["lead"]>
+export type LeadOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "companyName" | "companyWebsite" | "companySize" | "industry" | "location" | "contactName" | "contactEmail" | "contactTitle" | "contactLinkedin" | "source" | "qualificationScore" | "qualificationReason" | "applyDirect" | "pipelineStage" | "rawData" | "createdAt" | "updatedAt", ExtArgs["result"]["lead"]>
 export type LeadInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
   emails?: boolean | Prisma.Lead$emailsArgs<ExtArgs>
@@ -1295,6 +1340,7 @@ export type $LeadPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     source: string | null
     qualificationScore: number | null
     qualificationReason: string | null
+    applyDirect: boolean
     pipelineStage: string
     rawData: string | null
     createdAt: Date
@@ -1739,6 +1785,7 @@ export interface LeadFieldRefs {
   readonly source: Prisma.FieldRef<"Lead", 'String'>
   readonly qualificationScore: Prisma.FieldRef<"Lead", 'Float'>
   readonly qualificationReason: Prisma.FieldRef<"Lead", 'String'>
+  readonly applyDirect: Prisma.FieldRef<"Lead", 'Boolean'>
   readonly pipelineStage: Prisma.FieldRef<"Lead", 'String'>
   readonly rawData: Prisma.FieldRef<"Lead", 'String'>
   readonly createdAt: Prisma.FieldRef<"Lead", 'DateTime'>
