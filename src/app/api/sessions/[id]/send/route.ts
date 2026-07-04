@@ -48,6 +48,35 @@ export async function POST(
 
         if (!draft || !lead.contactEmail) continue;
 
+        // Load draft attachments if present
+        const attachmentsList: Array<{ name: string; content: string; mimeType: string }> = [];
+        if (draft.attachments) {
+          try {
+            const parsedAttachments = JSON.parse(draft.attachments);
+            if (Array.isArray(parsedAttachments)) {
+              for (const att of parsedAttachments) {
+                const kFile = await prisma.knowledgeFile.findUnique({
+                  where: { id: att.id }
+                });
+                if (kFile && kFile.filepath) {
+                  const fs = require("node:fs");
+                  if (fs.existsSync(kFile.filepath)) {
+                    const fileBuffer = fs.readFileSync(kFile.filepath);
+                    const base64 = fileBuffer.toString("base64");
+                    attachmentsList.push({
+                      name: kFile.name,
+                      content: base64,
+                      mimeType: kFile.mimeType || "application/octet-stream"
+                    });
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.error("[Outreach Send] Failed to read/construct attachments:", err);
+          }
+        }
+
         try {
           console.log(`[Outreach Send] Sending email to ${lead.contactEmail} (${lead.companyName})`);
           
@@ -59,7 +88,8 @@ export async function POST(
               subject: draft.subject,
               body: draft.body,
               fromName: senderName,
-              signature: signature
+              signature: signature,
+              attachments: attachmentsList
             });
           } catch (gmailErr) {
             console.warn("Gmail API sending failed, saving as mock sent details for demo/testing", gmailErr);

@@ -510,6 +510,7 @@ export interface SendEmailInput {
   body: string;
   fromName?: string;
   signature?: string;
+  attachments?: Array<{ name: string; content: string; mimeType: string }>;
 }
 
 export async function sendGmailEmail(input: SendEmailInput): Promise<{ messageId: string; threadId: string }> {
@@ -518,7 +519,8 @@ export async function sendGmailEmail(input: SendEmailInput): Promise<{ messageId
     to: input.to,
     subject: input.subject,
     body: fullBody,
-    fromName: input.fromName
+    fromName: input.fromName,
+    attachments: input.attachments
   });
   return {
     messageId: result.id,
