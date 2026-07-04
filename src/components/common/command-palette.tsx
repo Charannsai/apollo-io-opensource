@@ -95,6 +95,7 @@ export function CommandPalette() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full bg-transparent text-xs text-text-primary placeholder:text-text-tertiary border-none outline-none focus:outline-none focus:ring-0"
+                  style={{ border: "none", outline: "none", boxShadow: "none" }}
                   autoFocus
                 />
               </div>

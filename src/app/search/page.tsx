@@ -233,6 +233,7 @@ export default function SearchPage() {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Designation, tech stack, experience, location..."
                   className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-tertiary border-none outline-none focus:outline-none focus:ring-0"
+                  style={{ border: "none", outline: "none", boxShadow: "none" }}
                   autoFocus
                 />
                 <button
@@ -302,6 +303,7 @@ export default function SearchPage() {
                   onChange={(e) => setCurrentAnswer(e.target.value)}
                   placeholder="Type your answer here..."
                   className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-tertiary border-none outline-none focus:outline-none focus:ring-0"
+                  style={{ border: "none", outline: "none", boxShadow: "none" }}
                   autoFocus
                 />
                 <button
