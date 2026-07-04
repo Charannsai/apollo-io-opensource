@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,13 @@ export function Modal({
   cancelText = "Cancel",
   isDanger = false,
 }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted state on client mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Prevent body scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -38,17 +46,19 @@ export function Modal({
     };
   }, [isOpen]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
+          {/* Backdrop (Covers 100% of viewport) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/55 backdrop-blur-sm"
           />
 
           {/* Modal Card */}
@@ -58,7 +68,7 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
             className={cn(
-              "relative z-10 w-full max-w-md overflow-hidden border p-6 shadow-2xl transition-all duration-200",
+              "relative z-10 w-full max-w-md overflow-hidden border p-6 shadow-2xl transition-all duration-200 rounded-2xl",
               "bg-white border-neutral-200 text-neutral-900",
               "dark:bg-neutral-950 dark:border-neutral-800 dark:text-neutral-50"
             )}
@@ -88,7 +98,7 @@ export function Modal({
                   type="button"
                   onClick={onClose}
                   className={cn(
-                    "px-3.5 py-1.5 rounded text-xs font-medium border transition-colors duration-150 cursor-pointer",
+                    "px-3.5 py-1.5 rounded-lg text-xs font-medium border transition-colors duration-150 cursor-pointer",
                     "bg-transparent border-neutral-200 text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900",
                     "dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-neutral-50"
                   )}
@@ -103,7 +113,7 @@ export function Modal({
                       onClose();
                     }}
                     className={cn(
-                      "px-3.5 py-1.5 rounded text-xs font-medium transition-colors duration-150 cursor-pointer text-white dark:text-neutral-950",
+                      "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer text-white dark:text-neutral-950",
                       isDanger
                         ? "bg-neutral-800 hover:bg-neutral-900 dark:bg-neutral-100 dark:hover:bg-white"
                         : "bg-neutral-900 hover:bg-neutral-950 dark:bg-neutral-50 dark:hover:bg-white"
@@ -117,6 +127,7 @@ export function Modal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
