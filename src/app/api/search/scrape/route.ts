@@ -177,7 +177,21 @@ Respond strictly with a JSON array in the following format (no markdown formatti
 
   const parsedText = await gemini.generateContent(parsePrompt, "Convert search listings to structured JSON.");
   const cleanJson = parsedText.replace(/```json/gi, "").replace(/```/g, "").trim();
-  return JSON.parse(cleanJson);
+  
+  // Sanitize raw control characters to make JSON parsing bulletproof
+  const sanitizedJson = cleanJson.replace(/[\u0000-\u001F\u007F-\u009F]/g, (char) => {
+    if (char === "\n") return "\\n";
+    if (char === "\r") return "\\r";
+    if (char === "\t") return "\\t";
+    return " ";
+  });
+
+  try {
+    return JSON.parse(sanitizedJson);
+  } catch (err) {
+    console.error("Failed to parse scraped company JSON, falling back manually:", err);
+    return parseSearchResultsManually(searchResults, role);
+  }
 }
 
 function parseSearchResultsManually(results: any[], role: string) {

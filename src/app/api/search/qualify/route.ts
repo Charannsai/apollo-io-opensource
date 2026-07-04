@@ -51,10 +51,30 @@ Respond strictly with a JSON object in this format (no markdown blocks, no prefi
       try {
         const text = await geminiClient.generateContent(prompt, "You are a lead qualification assistant. Evaluate leads against recruitment/outbound search queries.");
         const cleanJson = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-        const parsed = JSON.parse(cleanJson);
         
-        const score = parsed.score ?? 80;
-        const reason = parsed.reason ?? "Fits role criteria";
+        // Sanitize raw control characters to make JSON parsing bulletproof
+        const sanitizedJson = cleanJson.replace(/[\u0000-\u001F\u007F-\u009F]/g, (char) => {
+          if (char === "\n") return "\\n";
+          if (char === "\r") return "\\r";
+          if (char === "\t") return "\\t";
+          return " ";
+        });
+
+        let score = 80;
+        let reason = "Fits role criteria";
+        try {
+          const parsed = JSON.parse(sanitizedJson);
+          score = parsed.score ?? 80;
+          reason = parsed.reason ?? "Fits role criteria";
+        } catch {
+          // Regex extraction fallback if JSON parsing still fails
+          const scoreMatch = sanitizedJson.match(/"score"\s*:\s*(\d+)/i);
+          if (scoreMatch) score = parseInt(scoreMatch[1], 10);
+          
+          const reasonMatch = sanitizedJson.match(/"reason"\s*:\s*"([^"]+)"/i);
+          if (reasonMatch) reason = reasonMatch[1];
+        }
+
         const stage = score >= 70 ? "qualified" : "rejected";
 
         await prisma.lead.update({
