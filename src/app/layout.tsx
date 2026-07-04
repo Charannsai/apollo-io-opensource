@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClientProviders } from "@/components/providers/client-providers";
 import { Sidebar } from "@/components/layout/sidebar";
+import { CommandPalette } from "@/components/common/command-palette";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -33,6 +34,7 @@ export default function RootLayout({
               </div>
             </main>
           </div>
+          <CommandPalette />
         </ClientProviders>
       </body>
     </html>
