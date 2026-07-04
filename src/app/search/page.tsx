@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LeadRowSkeleton } from "@/components/common/skeletons";
 
 interface Question {
   key: string;
@@ -421,15 +422,26 @@ export default function SearchPage() {
             key="scraping"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-20 mt-8 space-y-4"
+            className="mt-8 space-y-6"
           >
-            <RefreshCw className="w-10 h-10 text-accent-500 animate-spin" />
-            <h3 className="text-base font-semibold text-text-primary">
-              Discovering Opportunities
-            </h3>
-            <p className="text-sm text-text-secondary animate-pulse-subtle">
-              {scrapeProgress}
-            </p>
+            <div className="flex flex-col items-center justify-center p-6 border border-border bg-surface rounded-2xl text-center space-y-3">
+              <RefreshCw className="w-8 h-8 text-neutral-400 dark:text-neutral-500 animate-spin" />
+              <div>
+                <h3 className="text-sm font-medium text-text-primary">
+                  Discovering Opportunities
+                </h3>
+                <p className="text-xs text-text-tertiary mt-1">
+                  {scrapeProgress}
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider block">
+                Populating lead pipelines...
+              </span>
+              <LeadRowSkeleton />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

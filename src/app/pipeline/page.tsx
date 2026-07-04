@@ -8,6 +8,7 @@ import { GitBranch, MapPin, Briefcase, ChevronRight, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useState } from "react";
+import { CardSkeleton, Skeleton } from "@/components/common/skeletons";
 
 interface PipelineLead {
   id: string;
@@ -76,12 +77,20 @@ export default function PipelinePage() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse">
-        <div className="h-8 w-32 bg-surface-tertiary rounded mb-2" />
-        <div className="h-4 w-64 bg-surface-tertiary rounded mb-8" />
-        <div className="flex gap-4 overflow-x-auto">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="flex-1 min-w-[200px] h-[400px] bg-surface-tertiary rounded-xl" />
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-32 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+          {columns.map((col) => (
+            <div key={col.id} className="p-2 border border-border bg-surface-secondary rounded-xl space-y-3 min-h-[400px]">
+              <div className="flex justify-between items-center px-1">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4.5 w-6 rounded-full" />
+              </div>
+              <CardSkeleton />
+            </div>
           ))}
         </div>
       </div>
