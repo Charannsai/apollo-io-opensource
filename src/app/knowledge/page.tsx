@@ -66,7 +66,7 @@ export default function KnowledgePage() {
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   // Resume Import Modal state
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -297,14 +297,14 @@ export default function KnowledgePage() {
         </motion.div>
       </div>
 
-      {/* Resume Import Modal */}
-      <AnimatePresence>
-        {showResumeModal && (
+      {/* Resume Import Modal (Mounted to Document Body Root to Prevent Container Clip) */}
+      {mounted && showResumeModal && createPortal(
+        <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm"
             onClick={() => !isImporting && setShowResumeModal(false)}
           >
             <motion.div
@@ -420,22 +420,26 @@ export default function KnowledgePage() {
               </form>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
 
-      <Modal
-        isOpen={deleteEntryId !== null}
-        onClose={() => setDeleteEntryId(null)}
-        onConfirm={() => {
-          if (deleteEntryId) {
-            deleteEntry.mutate(deleteEntryId);
-          }
-        }}
-        title="Delete Knowledge Entry"
-        description="Are you sure you want to delete this knowledge base entry? This will prevent AI tools from utilizing this context in future email generation."
-        confirmText="Delete"
-        isDanger={true}
-      />
+      {mounted && createPortal(
+        <Modal
+          isOpen={deleteEntryId !== null}
+          onClose={() => setDeleteEntryId(null)}
+          onConfirm={() => {
+            if (deleteEntryId) {
+              deleteEntry.mutate(deleteEntryId);
+            }
+          }}
+          title="Delete Knowledge Entry"
+          description="Are you sure you want to delete this knowledge base entry? This will prevent AI tools from utilizing this context in future email generation."
+          confirmText="Delete"
+          isDanger={true}
+        />,
+        document.body
+      )}
     </motion.div>
   );
 }
