@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useKnowledge,
   useCreateKnowledgeEntry,
@@ -20,6 +21,10 @@ import {
   Calendar,
   FileText,
   X,
+  Upload,
+  Loader2,
+  CheckCircle,
+  FileUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +50,7 @@ const inputClasses = cn(
 );
 
 export default function KnowledgePage() {
+  const queryClient = useQueryClient();
   const { data, isLoading } = useKnowledge();
   const createEntry = useCreateKnowledgeEntry();
   const deleteEntry = useDeleteKnowledgeEntry();
@@ -52,6 +58,14 @@ export default function KnowledgePage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newValue, setNewValue] = useState("");
+  
+  // Resume Import Modal state
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeText, setResumeText] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importMessage, setImportMessage] = useState("");
+  const [importError, setImportError] = useState("");
 
   const entries = data?.entries || [];
   const filteredEntries = entries.filter((e) => e.category === activeCategory);
@@ -69,6 +83,50 @@ export default function KnowledgePage() {
     setShowAddForm(false);
   };
 
+  const handleResumeImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resumeFile && !resumeText.trim()) return;
+
+    setIsImporting(true);
+    setImportError("");
+    setImportMessage("Analyzing and extracting profile details...");
+
+    const formData = new FormData();
+    if (resumeFile) {
+      formData.append("file", resumeFile);
+    } else {
+      formData.append("text", resumeText);
+    }
+
+    try {
+      const res = await fetch("/api/knowledge/resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to process resume");
+      }
+
+      setImportMessage("Knowledge Base populated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["knowledge"] });
+      
+      setTimeout(() => {
+        setShowResumeModal(false);
+        setResumeFile(null);
+        setResumeText("");
+        setImportMessage("");
+      }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      setImportError(err.message || "Something went wrong during parsing.");
+      setImportMessage("");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -79,6 +137,15 @@ export default function KnowledgePage() {
         <PageHeader
           title="Knowledge Base"
           description="Your personal information used for AI email personalization"
+          action={
+            <button
+              onClick={() => setShowResumeModal(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-accent-500 text-white hover:bg-accent-600 transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              Import Resume
+            </button>
+          }
         />
       </motion.div>
 
@@ -223,6 +290,132 @@ export default function KnowledgePage() {
           )}
         </motion.div>
       </div>
+
+      {/* Resume Import Modal */}
+      <AnimatePresence>
+        {showResumeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => !isImporting && setShowResumeModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
+                  <FileUp className="w-5 h-5 text-accent-500" />
+                  Auto-populate from Resume
+                </h2>
+                <button
+                  onClick={() => setShowResumeModal(false)}
+                  disabled={isImporting}
+                  className="p-1 rounded-lg hover:bg-surface-hover text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-50"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleResumeImport} className="space-y-4">
+                <div className="border border-dashed border-border rounded-xl p-4 flex flex-col items-center justify-center bg-surface-secondary text-center hover:bg-surface-secondary/80 transition-colors relative">
+                  <Upload className="w-8 h-8 text-text-tertiary mb-2" />
+                  <span className="text-xs font-semibold text-text-primary">
+                    {resumeFile ? resumeFile.name : "Select Resume PDF or Text file"}
+                  </span>
+                  <span className="text-[10px] text-text-tertiary mt-1">
+                    Drag and drop or browse files (.pdf, .txt, .md)
+                  </span>
+                  <input
+                    type="file"
+                    accept=".pdf,.txt,.md"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setResumeFile(e.target.files[0]);
+                        setResumeText("");
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={isImporting}
+                  />
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-surface px-2 text-text-tertiary">Or Paste Text</span>
+                  </div>
+                </div>
+
+                <div>
+                  <textarea
+                    value={resumeText}
+                    onChange={(e) => {
+                      setResumeText(e.target.value);
+                      if (e.target.value.trim()) setResumeFile(null);
+                    }}
+                    placeholder="Paste the raw text of your resume here..."
+                    rows={6}
+                    className={cn(inputClasses, "resize-none font-mono text-xs")}
+                    disabled={isImporting}
+                  />
+                </div>
+
+                {importMessage && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-accent-50 text-accent-700 dark:bg-accent-950/20 dark:text-accent-400 text-xs">
+                    {importMessage.includes("success") ? (
+                      <CheckCircle className="w-4 h-4 text-success-500 shrink-0" />
+                    ) : (
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    )}
+                    <span>{importMessage}</span>
+                  </div>
+                )}
+
+                {importError && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-danger-50 text-danger-700 dark:bg-danger-950/20 dark:text-danger-400 text-xs">
+                    <X className="w-4 h-4 text-danger-500 shrink-0" />
+                    <span>{importError}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => setShowResumeModal(false)}
+                    disabled={isImporting}
+                    className="px-3.5 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-all disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={(!resumeFile && !resumeText.trim()) || isImporting}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium bg-accent-500 text-white hover:bg-accent-600 disabled:opacity-50 transition-colors"
+                  >
+                    {isImporting ? (
+                      <>
+                        <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Extract & Import"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
