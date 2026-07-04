@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Inbox as InboxIcon,
   Send,
@@ -53,6 +53,93 @@ interface Thread {
   lastSender: string;
   subject: string;
   isUnread: boolean;
+}
+
+// Sandbox IFrame Email Body renderer (matches Gmail styling standards)
+function EmailIframe({ htmlContent }: { htmlContent: string }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [height, setHeight] = useState("300px");
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) return;
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              font-size: 13.5px;
+              line-height: 1.6;
+              color: #222222;
+              margin: 0;
+              padding: 4px;
+              background-color: #ffffff;
+              word-wrap: break-word;
+              word-break: break-word;
+            }
+            img {
+              max-width: 100% !important;
+              height: auto !important;
+            }
+            table {
+              max-width: 100% !important;
+              width: 100% !important;
+              border-collapse: collapse;
+            }
+          </style>
+        </head>
+        <body>
+          ${htmlContent}
+          <script>
+            function sendHeight() {
+              const h = document.documentElement.scrollHeight || document.body.scrollHeight;
+              window.parent.postMessage({ type: 'resize-iframe', height: h }, '*');
+            }
+            window.addEventListener('load', sendHeight);
+            window.addEventListener('resize', sendHeight);
+            if (window.ResizeObserver) {
+              const ro = new ResizeObserver(sendHeight);
+              ro.observe(document.body);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'resize-iframe') {
+        setHeight(event.data.height + "px");
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [htmlContent]);
+
+  return (
+    <iframe
+      ref={iframeRef}
+      style={{
+        width: "100%",
+        height: height,
+        border: "none",
+        overflow: "hidden",
+        background: "#ffffff"
+      }}
+      title="Email Content"
+      sandbox="allow-same-origin allow-popups"
+    />
+  );
 }
 
 export default function InboxPage() {
@@ -436,7 +523,7 @@ export default function InboxPage() {
         </div>
       </div>
 
-      {/* Column 3: Message conversation body panel */}
+      {/* Column 3: Message conversation body panel (Redesigned like Gmail) */}
       <div className="flex-1 flex flex-col overflow-hidden bg-surface h-full">
         {selectedThreadId ? (
           isLoadingMessages ? (
@@ -445,60 +532,62 @@ export default function InboxPage() {
               <span className="text-xs text-text-tertiary">Loading conversation...</span>
             </div>
           ) : messages && messages.length > 0 ? (
-            <div className="flex-1 flex flex-col overflow-hidden h-full">
+            <div className="flex-1 flex flex-col overflow-hidden h-full bg-surface">
               
-              {/* Glassmorphism Header */}
-              <div className="px-6 py-4.5 border-b border-border bg-gradient-to-r from-surface-secondary/40 to-surface/10 backdrop-blur-md flex items-center justify-between shrink-0">
-                <h3 className="text-sm font-semibold text-text-primary truncate max-w-[85%]">
+              {/* Thread Subject Title (Large title on top) */}
+              <div className="px-8 py-5 border-b border-border/80 flex items-center justify-between shrink-0">
+                <h3 className="text-base font-semibold text-text-primary truncate max-w-[80%]">
                   {messages[0].subject}
                 </h3>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-text-tertiary bg-surface-secondary border border-border/50 px-2 py-0.5 rounded-full">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-text-tertiary bg-surface-secondary border border-border/65 px-2.5 py-0.5 rounded-full select-none">
                   {messages.length} message{messages.length > 1 ? "s" : ""}
                 </span>
               </div>
 
-              {/* Messages Body Stack (Individual cards stack) */}
-              <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5 bg-gradient-to-b from-surface-secondary/5 to-surface/5">
+              {/* Messages Body Stack (No floating cards, clean divider flow like Gmail) */}
+              <div className="flex-1 overflow-y-auto divide-y divide-border/60 bg-surface">
                 {messages.map((msg, idx) => (
                   <motion.div 
-                    initial={{ opacity: 0, y: 8 }}
+                    initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.18, delay: idx * 0.05 }}
+                    transition={{ duration: 0.15, delay: idx * 0.04 }}
                     key={msg.id} 
-                    className="border border-border/60 dark:border-border/30 rounded-2xl bg-surface p-5 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.02)] transition-all duration-200"
+                    className="px-8 py-6 flex flex-col"
                   >
-                    <div className="flex items-center justify-between mb-4 border-b border-border/40 pb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neutral-800 to-neutral-950 text-white flex items-center justify-center font-bold text-xs shrink-0 select-none shadow-sm">
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between mb-4 select-none">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-800 dark:to-neutral-700 flex items-center justify-center font-bold text-xs shrink-0 select-none text-text-primary">
                           {cleanEmailSender(msg.from).substring(0, 1).toUpperCase()}
                         </div>
                         <div>
                           <span className="text-xs font-semibold text-text-primary block leading-none">
                             {cleanEmailSender(msg.from)}
                           </span>
-                          <span className="text-[10px] text-text-tertiary mt-1 block leading-none">
-                            To: {cleanEmailSender(msg.to)}
+                          <span className="text-[10px] text-text-tertiary mt-1.5 block leading-none">
+                            to {cleanEmailSender(msg.to)}
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-text-tertiary font-medium bg-surface-secondary px-2 py-1 rounded-lg border border-border/40 shadow-sm">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{formatTime(msg.date)}</span>
-                      </div>
+                      <span className="text-[10px] text-text-tertiary font-medium">
+                        {formatTime(msg.date)}
+                      </span>
                     </div>
 
-                    <div 
-                      className="email-body-container text-xs text-text-secondary font-medium leading-relaxed whitespace-pre-wrap selection:bg-neutral-800/10 dark:selection:bg-neutral-100/10 select-text"
-                      dangerouslySetInnerHTML={{ 
-                        __html: msg.body.includes("<html") || msg.body.includes("<body") || msg.body.includes("<div") 
-                          ? msg.body 
-                          : msg.body.replace(/\n/g, "<br/>") 
-                      }}
-                    />
+                    {/* Isolated Full-Width Email Body Content */}
+                    <div className="w-full mt-2 overflow-hidden rounded-xl border border-border/40 shadow-sm bg-white">
+                      {msg.body.includes("<html") || msg.body.includes("<body") || msg.body.includes("<div") || msg.body.includes("<table") || msg.body.includes("<p") ? (
+                        <EmailIframe htmlContent={msg.body} />
+                      ) : (
+                        <div className="p-5 text-xs font-medium leading-relaxed whitespace-pre-wrap select-text text-neutral-800 bg-white">
+                          {msg.body}
+                        </div>
+                      )}
+                    </div>
 
                     {/* Attachments badges */}
                     {msg.attachments && msg.attachments.length > 0 && (
-                      <div className="mt-5 pt-4 border-t border-border/40 flex flex-wrap gap-2">
+                      <div className="mt-4 flex flex-wrap gap-2">
                         {msg.attachments.map((file) => (
                           <a
                             key={file.id}
