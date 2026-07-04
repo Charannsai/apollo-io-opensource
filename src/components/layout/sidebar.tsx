@@ -47,7 +47,7 @@ export function Sidebar() {
       transition={{ duration: 0.2, ease: "easeInOut" }}
       className={cn(
         "flex flex-col h-screen sticky top-0 z-30 select-none border-r transition-all duration-200",
-        "bg-neutral-50 border-neutral-200/40 dark:bg-neutral-950 dark:border-neutral-900"
+        "bg-white border-neutral-100 dark:bg-neutral-950 dark:border-neutral-900"
       )}
     >
       {/* Logo */}
