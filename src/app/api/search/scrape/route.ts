@@ -111,9 +111,9 @@ async function runApifyScrape(apiKey: string, query: any) {
   const runId = runData.data.id;
   const datasetId = runData.data.defaultDatasetId;
 
-  // Poll actor status for up to 25 seconds
+  // Poll actor status for up to 90 seconds
   let isFinished = false;
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 18; i++) {
     await new Promise((resolve) => setTimeout(resolve, 5000));
     const statusRes = await fetch(
       `https://api.apify.com/v2/actor-runs/${runId}?token=${apiKey}`
