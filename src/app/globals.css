@@ -216,3 +216,25 @@ select,
   cursor: pointer !important;
 }
 
+/* ===== HTML Email Container Safety Overrides ===== */
+.email-body-container {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+.email-body-container * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  word-break: break-word !important;
+}
+.email-body-container table {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: table !important;
+  table-layout: fixed !important;
+}
+.email-body-container img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+
