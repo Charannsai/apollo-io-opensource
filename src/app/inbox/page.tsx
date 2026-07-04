@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
-import { PageHeader } from "@/components/common/page-header";
 import {
   Inbox as InboxIcon,
   Send,
@@ -14,6 +13,7 @@ import {
   Search,
   RefreshCw,
   ArrowRight,
+  ArrowLeft,
   HelpCircle,
   AlertCircle,
   X,
@@ -22,6 +22,7 @@ import {
   Clock,
   Sparkles
 } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
