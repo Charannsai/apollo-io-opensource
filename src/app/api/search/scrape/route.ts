@@ -4,7 +4,7 @@ import { getGeminiClient, safeParseJson } from "@/lib/gemini";
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId, analyzedQuery } = await request.json();
+    const { sessionId, analyzedQuery, determinedSources = [] } = await request.json();
 
     if (!sessionId) {
       return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     if (apifyKey && apifyKey.length > 5) {
       try {
-        leads = await runApifyScrape(apifyKey, analyzedQuery);
+        leads = await runApifyScrape(apifyKey, analyzedQuery, determinedSources);
       } catch (err) {
         console.warn("Apify integration failed, falling back to mock leads generator", err);
         leads = generateMockLeads(analyzedQuery);
@@ -102,17 +102,52 @@ export async function POST(request: NextRequest) {
 // Multi-Query Apify Scraper with AI Extraction
 // ============================================
 
-async function runApifyScrape(apiKey: string, query: any) {
+async function runApifyScrape(apiKey: string, query: any, determinedSources: string[] = []) {
   const role = query?.role || "Software Engineer";
   const location = query?.location || "Remote";
 
-  // Build multiple diverse search queries to maximize coverage
-  const searchQueries = [
-    `site:greenhouse.io "${role}" "${location}" hiring`,
-    `site:lever.co "${role}" "${location}" hiring`,
-    `site:ashbyhq.com "${role}" "${location}"`,
-    `"${role}" hiring remote careers apply -linkedin.com -indeed.com -glassdoor.com`,
-  ].join("\n");
+  // Construct a prompt for Gemini to generate the Google search queries dynamically
+  const gemini = await getGeminiClient().catch(() => null);
+  let searchQueries = "";
+
+  if (gemini && determinedSources.length > 0) {
+    const queryPrompt = `You are a Google Search query expert.
+Your job is to generate exactly 3-4 highly effective search queries to find live job listings, career openings, or company contacts based on the target profile and the target sources list.
+
+Target Profile:
+Role: ${role}
+Location: ${location}
+
+Target Sources list determined by AI:
+${determinedSources.join(", ")}
+
+Instructions:
+- Use standard Google search operators.
+- If "Greenhouse", "Lever", or "Ashby" are listed, generate queries using "site:greenhouse.io", "site:lever.co", or "site:ashbyhq.com" to target those specific platforms.
+- If "YCombinator", "Crunchbase", or startup directories are listed, target those or construct matching terms.
+- Use quotes for exact matches.
+- Keep the queries highly specific to the target profile.
+- Return exactly one search query per line. Do not output markdown, bullet points, numbers, symbols, prefix, or introductions. Just the raw queries.`;
+
+    try {
+      const resText = await gemini.generateContent(queryPrompt, "Generate Google Search queries. One per line. No extra text.");
+      searchQueries = resText.trim();
+      console.log(`[Apify Scrape] Dynamically generated AI queries based on sources:\n${searchQueries}`);
+    } catch (err) {
+      console.error("Failed to generate dynamic search queries with Gemini:", err);
+    }
+  }
+
+  // Fallback queries if Gemini fails or determinedSources is empty
+  if (!searchQueries) {
+    searchQueries = [
+      `site:greenhouse.io "${role}" "${location}" hiring`,
+      `site:lever.co "${role}" "${location}" hiring`,
+      `site:ashbyhq.com "${role}" "${location}"`,
+      `"${role}" hiring remote careers apply -linkedin.com -indeed.com -glassdoor.com`,
+    ].join("\n");
+    console.log(`[Apify Scrape] Using fallback predefined queries:\n${searchQueries}`);
+  }
 
   console.log(`[Apify Scrape] Launching multi-query scrape for: "${role}" (${location})`);
 
