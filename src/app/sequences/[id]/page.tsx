@@ -385,7 +385,7 @@ export default function SequenceDetailPage({
                               <label className="font-bold text-text-secondary">Action Type</label>
                               <select
                                 value={editingStepForm.type}
-                                onChange={(e) => setEditingStepForm(prev => ({ ...prev, type: e.target.value }))}
+                                onChange={(e) => setEditingStepForm((prev: any) => ({ ...prev, type: e.target.value }))}
                                 className="w-full bg-surface px-3 py-1.5 border border-border rounded-lg"
                               >
                                 <option value="email_auto">Automatic Email</option>
@@ -400,7 +400,7 @@ export default function SequenceDetailPage({
                               <input
                                 type="number"
                                 value={editingStepForm.delayDays}
-                                onChange={(e) => setEditingStepForm(prev => ({ ...prev, delayDays: e.target.value }))}
+                                onChange={(e) => setEditingStepForm((prev: any) => ({ ...prev, delayDays: e.target.value }))}
                                 className="w-full bg-surface px-3 py-1.5 border border-border rounded-lg"
                               />
                             </div>
@@ -414,7 +414,7 @@ export default function SequenceDetailPage({
                                   type="text"
                                   placeholder="Use {{companyName}}, {{contactName}}, {{location}} variables"
                                   value={editingStepForm.subject}
-                                  onChange={(e) => setEditingStepForm(prev => ({ ...prev, subject: e.target.value }))}
+                                  onChange={(e) => setEditingStepForm((prev: any) => ({ ...prev, subject: e.target.value }))}
                                   className="w-full bg-surface px-3 py-1.5 border border-border rounded-lg"
                                 />
                               </div>
@@ -423,7 +423,7 @@ export default function SequenceDetailPage({
                                 <textarea
                                   placeholder="Write follow-up email..."
                                   value={editingStepForm.body}
-                                  onChange={(e) => setEditingStepForm(prev => ({ ...prev, body: e.target.value }))}
+                                  onChange={(e) => setEditingStepForm((prev: any) => ({ ...prev, body: e.target.value }))}
                                   className="w-full bg-surface px-3 py-2 border border-border rounded-lg h-32 resize-none"
                                 />
                               </div>
@@ -434,7 +434,7 @@ export default function SequenceDetailPage({
                               <textarea
                                 placeholder="Describe details for the outreach agent..."
                                 value={editingStepForm.instructions}
-                                onChange={(e) => setEditingStepForm(prev => ({ ...prev, instructions: e.target.value }))}
+                                onChange={(e) => setEditingStepForm((prev: any) => ({ ...prev, instructions: e.target.value }))}
                                 className="w-full bg-surface px-3 py-2 border border-border rounded-lg h-20 resize-none"
                               />
                             </div>
