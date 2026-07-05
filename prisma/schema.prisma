@@ -40,6 +40,8 @@ model Lead {
   source          String?  // apify, manual, import
   qualificationScore Float?
   qualificationReason String?
+  qualificationReport String?  // JSON string containing detailed scorecard
+  outreachStrategy    String?  // JSON string containing outreach channel details
   applyDirect     Boolean  @default(false)
   pipelineStage   String   @default("generated") // generated, qualified, personalized, reviewed, approved, sent, replied, converted, rejected, bounced
   rawData         String?  // JSON string of all scraped data
