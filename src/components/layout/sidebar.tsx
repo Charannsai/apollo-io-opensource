@@ -107,8 +107,8 @@ export function Sidebar() {
     >
       {/* Top Brand Area */}
       <div className="flex items-center gap-3.5 p-3 border-b border-sidebar-border h-12 shrink-0 overflow-hidden">
-        <div className="w-6.5 h-6.5 rounded-lg bg-yellow-500 flex items-center justify-center text-white shrink-0">
-          <Zap className="w-3.5 h-3.5 fill-white" />
+        <div className="w-6.5 h-6.5 rounded-lg bg-sidebar-active-bg border border-sidebar-border/40 flex items-center justify-center text-yellow-500 shrink-0">
+          <Zap className="w-3.5 h-3.5 fill-yellow-500" />
         </div>
         {!isCollapsed && (
           <motion.div
@@ -146,11 +146,11 @@ export function Sidebar() {
                     className={cn(
                       "flex items-center gap-2.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all duration-150 relative group",
                       isActive
-                        ? "bg-accent-500 text-white shadow-sm"
+                        ? "bg-sidebar-active-bg text-sidebar-active-text border border-sidebar-border/30 shadow-sm"
                         : "hover:bg-sidebar-hover text-gray-400 hover:text-white"
                     )}
                   >
-                    <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-white" : "text-gray-400 group-hover:text-white")} />
+                    <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-sidebar-active-text" : "text-gray-400 group-hover:text-white")} />
                     {!isCollapsed && (
                       <span className="truncate">{item.label}</span>
                     )}

@@ -76,6 +76,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-hover: var(--sidebar-hover);
   --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-active-text: var(--sidebar-active-text);
 }
 
 /* ===== Light Theme ===== */
@@ -95,6 +97,8 @@
   --sidebar-border: #1e293b;
   --sidebar-hover: #1e293b;
   --sidebar-active: #104bbf;
+  --sidebar-active-bg: #1e293b; /* graphite dark tone for light mode sidebar (dark theme sidebar is default in Apollo) */
+  --sidebar-active-text: #f9fafb;
 }
 
 /* ===== Dark Theme ===== */
@@ -114,6 +118,8 @@
   --sidebar-border: #111827;
   --sidebar-hover: #111827;
   --sidebar-active: #104bbf;
+  --sidebar-active-bg: #1f2937; /* graphite hover dark highlight */
+  --sidebar-active-text: #f9fafb;
 }
 
 /* ===== Base Styles ===== */
