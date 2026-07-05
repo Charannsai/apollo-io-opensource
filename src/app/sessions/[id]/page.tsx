@@ -910,8 +910,7 @@ export default function SessionDetailPage({
         description="Are you sure you want to discard this lead? It will be removed from your campaign session."
         confirmText="Discard"
         isDanger={true}
-      />
-    </motion.div>
+
   );
 }
 
