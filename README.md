@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OutReach AI
 
-## Getting Started
+OutReach AI is a powerful, autonomous, and beautiful AI-powered outbound sales and lead outreach platform. It empowers businesses and creators to automate lead discovery, personalize email outreach campaigns with deep context, manage pipelines, and track conversations in a single unified dashboard.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Key Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **🔍 Intelligent Lead Discovery**: Find and scrape fresh lead data from target sources using integrated extraction pipelines (powered by Apify).
+- **🤖 Autonomous AI Sessions**: Coordinate campaigns with the help of an AI copilot (Google Gemini / Groq) that suggests personalized messaging strategies and refines targets.
+- **📚 Knowledge Base Integration**: Upload files (PDFs, text documents, or guides) to feed context (brochures, sales decks, company background) directly into the AI's email personalization engine.
+- **📊 Visual Outreach Pipeline**: A Kanban CRM board to track every prospect's state, from `Discovered` to `Contacted`, `Replied`, and `Converted`.
+- **📥 Unified Inbox & Sentiment Analysis**: Track incoming prospect responses, classify reply intent automatically using AI, and view conversation histories.
+- **✉️ Dynamic Templates**: Define and organize reusable email templates with custom template tags.
+- **📈 Conversion Analytics**: Measure the effectiveness of campaigns with a dynamic dashboard showing reply rates, sent counts, and trends over time.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Tech Stack
 
-## Learn More
+- **Frontend**: [Next.js (App Router)](https://nextjs.org), [React Query](https://tanstack.com/query/latest), [Framer Motion](https://www.framer.com/motion/) (for premium fluid animations), [Lucide React](https://lucide.dev)
+- **Styling**: Tailwind CSS & Vanilla CSS Design Tokens
+- **Database & ORM**: SQLite via [Prisma ORM](https://www.prisma.io)
+- **AI Integration**: Google Gemini API, Groq SDK
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Getting Started
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Prerequisites
 
-## Deploy on Vercel
+Make sure you have [Node.js](https://nodejs.org/) (v18+) and `npm` installed on your machine.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Installation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/leadoutreach.git
+   cd leadoutreach
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables:**
+   Copy the example environment file and fill in your keys:
+   ```bash
+   cp .env.example .env
+   ```
+   Open the `.env` file and supply:
+   - `DATABASE_URL`: Path to your SQLite DB (defaults to `file:../data/outreach.db`).
+   - `GEMINI_API_KEY`: Your Google Gemini API Key.
+   - `APIFY_API_KEY`: API key for lead scraping.
+   - `GMAIL_CLIENT_ID` / `GMAIL_CLIENT_SECRET`: For Google OAuth / Gmail integration.
+
+4. **Initialize the Database:**
+   Generate the Prisma client, run migrations, and seed initial database tables:
+   ```bash
+   npm run db:setup
+   ```
+
+5. **Start the Development Server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions to OutReach AI! To contribute:
+
+1. Fork the Project.
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the Branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
