@@ -1,3 +1,4 @@
+// Conversational AI Lead Qualification Route
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getGeminiClient, safeParseJson } from "@/lib/gemini";

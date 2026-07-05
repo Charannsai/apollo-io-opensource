@@ -1,3 +1,4 @@
+// OutReach AI Prisma Client Initializer
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import path from "node:path";
