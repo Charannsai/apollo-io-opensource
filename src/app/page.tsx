@@ -390,54 +390,15 @@ function StatCard({
 
 function DashboardSkeleton() {
   return (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-10 w-full bg-surface-tertiary rounded-xl" />
+      <div className="h-14 w-full bg-surface-tertiary rounded-xl" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-20 bg-surface rounded-xl border border-border" />
         ))}
       </div>
-
-      {/* Action shortcuts */}
-      <div className="grid grid-cols-3 gap-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="p-3 border border-border bg-surface rounded-xl space-y-2">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-3.5 w-40" />
-          </div>
-        ))}
-      </div>
-
-      {/* Table Skeletons */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Sessions */}
-        <div className="p-5 border border-border bg-surface rounded-xl space-y-4">
-          <Skeleton className="h-5 w-32" />
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex justify-between items-center py-2 border-b border-border/40">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-36" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
-                <Skeleton className="h-4 w-12" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Replies */}
-        <div className="p-5 border border-border bg-surface rounded-xl space-y-4">
-          <Skeleton className="h-5 w-32" />
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="py-2 border-b border-border/40 space-y-2">
-                <div className="flex justify-between">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-3 w-12" />
-                </div>
-                <Skeleton className="h-3.5 w-full" />
-                <Skeleton className="h-3.5 w-2/3" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <div className="h-48 bg-surface rounded-xl border border-border" />
     </div>
   );
 }
