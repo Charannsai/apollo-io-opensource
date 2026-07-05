@@ -910,9 +910,276 @@ export default function SessionDetailPage({
         description="Are you sure you want to discard this lead? It will be removed from your campaign session."
         confirmText="Discard"
         isDanger={true}
+      />
 
-  );
-}
+      {/* Slide-over details drawer */}
+      <AnimatePresence>
+        {activeLeadDetailsId && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveLeadDetailsId(null)}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 cursor-pointer"
+            />
+            
+            {/* Drawer Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-full max-w-xl bg-surface border-l border-border shadow-2xl z-50 overflow-y-auto flex flex-col p-6 space-y-6"
+            >
+              {(() => {
+                const lead = session.leads.find((l: any) => l.id === activeLeadDetailsId);
+                if (!lead) return null;
+
+                let report: any = null;
+                let strategy: any = null;
+                if (lead.qualificationReport) {
+                  try { report = JSON.parse(lead.qualificationReport); } catch {}
+                }
+                if (lead.outreachStrategy) {
+                  try { strategy = JSON.parse(lead.outreachStrategy); } catch {}
+                }
+
+                return (
+                  <div className="flex flex-col h-full justify-between min-w-0">
+                    <div className="space-y-6">
+                      {/* Drawer Header */}
+                      <div className="flex items-start justify-between border-b border-border pb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-14 h-14 flex items-center justify-center shrink-0 rounded-full bg-surface-secondary border border-border">
+                            <span className="text-sm font-bold text-text-primary">{lead.qualificationScore || 0}%</span>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-base text-text-primary flex items-center gap-1.5">
+                              {lead.companyName}
+                              {lead.companyWebsite && (
+                                <a
+                                  href={lead.companyWebsite}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-text-tertiary hover:text-accent-500 transition-colors"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                            </h3>
+                            <p className="text-xs text-text-secondary">
+                              {lead.contactName || "No Contact"} · {lead.contactTitle || "Hiring Team"}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveLeadDetailsId(null)}
+                          className="p-1 rounded-lg hover:bg-surface-hover text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      {/* 8-Dimensional Scorecard */}
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+                          <Award className="w-4 h-4 text-text-tertiary" />
+                          AI Qualification Scorecard
+                        </h4>
+                        
+                        {report ? (
+                          <div className="grid grid-cols-2 gap-3">
+                            {Object.entries(report).map(([key, details]: [string, any]) => (
+                              <div key={key} className="p-3 border border-border rounded-xl bg-surface-secondary space-y-1.5">
+                                <div className="flex justify-between text-xs font-semibold text-text-primary capitalize">
+                                  <span>{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                  <span className="text-accent-500 font-bold">{details.score}%</span>
+                                </div>
+                                <div className="w-full bg-surface-tertiary h-1.5 rounded-full overflow-hidden">
+                                  <div className="bg-accent-500 h-full rounded-full" style={{ width: `${details.score}%` }} />
+                                </div>
+                                <p className="text-[10px] text-text-secondary leading-relaxed">{details.reason}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-text-tertiary p-3 border border-dashed border-border rounded-xl bg-surface-secondary text-center">
+                            Detailed scorecard not available. This lead was generated with legacy qualification details.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* AI Outreach Strategy Display */}
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+                          <Bot className="w-4 h-4 text-text-tertiary" />
+                          Recommended Outreach Strategy
+                        </h4>
+                        
+                        <div className="p-4 border border-border rounded-xl bg-surface space-y-3.5">
+                          <div className="grid grid-cols-2 gap-4 text-xs">
+                            <div>
+                              <span className="text-text-tertiary block mb-0.5">Contact Person</span>
+                              <span className="font-semibold text-text-primary flex items-center gap-1.5">
+                                {customContactName || "Hiring Team"}
+                                {customContactLinkedin && (
+                                  <a href={customContactLinkedin} target="_blank" rel="noreferrer" className="text-accent-500 hover:underline">
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-text-tertiary block mb-0.5">Target Title</span>
+                              <span className="font-semibold text-text-primary">{customContactTitle || "Engineering Director"}</span>
+                            </div>
+                            <div>
+                              <span className="text-text-tertiary block mb-0.5">Recommended Channel</span>
+                              <span className="font-semibold text-text-primary capitalize flex items-center gap-1.5">
+                                {customChannel === "email" ? "📧 Email" : customChannel === "linkedin" ? "💬 LinkedIn Connect" : customChannel === "careers_page" ? "💼 Careers Portal" : "🔗 Other"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-text-tertiary block mb-0.5">Response Probability</span>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className={cn(
+                                  "font-semibold",
+                                  customProbability >= 70 ? "text-success-600" : customProbability >= 45 ? "text-warning-600" : "text-danger-600"
+                                )}>{customProbability}%</span>
+                                <div className="w-16 bg-surface-tertiary h-1.5 rounded-full overflow-hidden shrink-0">
+                                  <div className={cn(
+                                    "h-full rounded-full",
+                                    customProbability >= 70 ? "bg-success-500" : customProbability >= 45 ? "bg-warning-500" : "bg-danger-500"
+                                  )} style={{ width: `${customProbability}%` }} />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {strategy?.firstMethod && (
+                            <div className="text-xs">
+                              <span className="text-text-tertiary block mb-0.5 font-medium">First Action Step</span>
+                              <p className="text-text-primary leading-relaxed bg-surface-secondary border border-border p-2 rounded-lg">{strategy.firstMethod}</p>
+                            </div>
+                          )}
+
+                          {strategy?.strategyReason && (
+                            <div className="text-xs">
+                              <span className="text-text-tertiary block mb-0.5 font-medium">Outreach Rationale</span>
+                              <p className="text-text-secondary leading-relaxed bg-surface-secondary border border-border p-2 rounded-lg italic">&ldquo;{strategy.strategyReason}&rdquo;</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Interactive Customizer Panel */}
+                      <div className="mt-8 pt-6 border-t border-border space-y-4">
+                        <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+                          <Sliders className="w-4 h-4 text-text-tertiary" />
+                          Refine Strategy Parameters
+                        </h4>
+
+                        <div className="space-y-3.5">
+                          <div className="space-y-1">
+                            <label className="block text-[11px] font-semibold text-text-secondary uppercase">Recommended Outreach Channel</label>
+                            <select
+                              value={customChannel}
+                              onChange={(e) => setCustomChannel(e.target.value)}
+                              className="w-full text-xs bg-surface-secondary border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:border-accent-500 cursor-pointer"
+                            >
+                              <option value="email">📧 Personal Email Pitch</option>
+                              <option value="linkedin">💬 LinkedIn Connection Note</option>
+                              <option value="careers_page">💼 Careers Page Direct Application</option>
+                              <option value="other">🔗 Other / Manual Outreach</option>
+                            </select>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="block text-[11px] font-semibold text-text-secondary uppercase">Contact Name</label>
+                              <input
+                                type="text"
+                                value={customContactName}
+                                onChange={(e) => setCustomContactName(e.target.value)}
+                                className="w-full text-xs bg-surface-secondary border border-border rounded-lg px-3 py-1.5 text-text-primary focus:outline-none focus:border-accent-500"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-[11px] font-semibold text-text-secondary uppercase">Contact Title</label>
+                              <input
+                                type="text"
+                                value={customContactTitle}
+                                onChange={(e) => setCustomContactTitle(e.target.value)}
+                                className="w-full text-xs bg-surface-secondary border border-border rounded-lg px-3 py-1.5 text-text-primary focus:outline-none focus:border-accent-500"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="block text-[11px] font-semibold text-text-secondary uppercase">LinkedIn URL</label>
+                            <input
+                              type="text"
+                              value={customContactLinkedin}
+                              onChange={(e) => setCustomContactLinkedin(e.target.value)}
+                              className="w-full text-xs bg-surface-secondary border border-border rounded-lg px-3 py-1.5 text-text-primary focus:outline-none focus:border-accent-500"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[11px] font-semibold text-text-secondary uppercase">
+                              <span>Estimated Response Probability</span>
+                              <span className="font-bold text-accent-500">{customProbability}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={customProbability}
+                              onChange={(e) => setCustomProbability(parseInt(e.target.value))}
+                              className="w-full accent-accent-500 cursor-pointer"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="block text-[11px] font-semibold text-text-secondary uppercase">Context to Reference</label>
+                            <textarea
+                              value={customContext}
+                              onChange={(e) => setCustomContext(e.target.value)}
+                              rows={3}
+                              className="w-full text-xs bg-surface-secondary border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:border-accent-500 resize-none font-mono"
+                              placeholder="Mention specific projects, stack elements, or recent milestones..."
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 justify-end pt-2">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveStrategy(lead)}
+                            disabled={isUpdatingStrategy}
+                            className="px-4 py-2 bg-neutral-900 dark:bg-neutral-50 text-white dark:text-neutral-950 rounded-lg text-xs font-semibold hover:opacity-90 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer select-none"
+                          >
+                            {isUpdatingStrategy ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Save className="w-3.5 h-3.5" />
+                            )}
+                            Save strategy
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </motion.div>
 
 function FunnelRow({ label, count, percent }: { label: string; count: number; percent: number }) {
   return (
