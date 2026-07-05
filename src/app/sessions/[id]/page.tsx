@@ -8,26 +8,7 @@ import { Modal } from "@/components/common/modal";
 import { StatusBadge } from "@/components/common/status-badge";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Users,
-  Mail,
-  MessageSquare,
-  Clock,
-  Edit3,
-  Check,
-  X,
-  FileText,
-  BarChart3,
-  Play,
-  Send,
-  Loader2,
-  Trash2,
-  CheckCircle,
-  ExternalLink,
-  ChevronRight,
-  RefreshCw,
-} from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 const fadeUp = {
