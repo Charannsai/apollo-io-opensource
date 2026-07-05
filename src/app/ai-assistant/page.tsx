@@ -171,6 +171,11 @@ export default function AIAssistantPage() {
     }
   };
 
+  const handleSelectOption = (opt: string) => {
+    setCurrentAnswer(opt);
+    submitAnswer(opt);
+  };
+
   const handleAnswerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     submitAnswer(currentAnswer);
