@@ -1,5 +1,9 @@
 # OutReach AI
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
+
 OutReach AI is a powerful, autonomous, and beautiful AI-powered outbound sales and lead outreach platform. It empowers businesses and creators to automate lead discovery, personalize email outreach campaigns with deep context, manage pipelines, and track conversations in a single unified dashboard.
 
 ---
