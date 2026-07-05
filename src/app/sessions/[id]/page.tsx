@@ -97,7 +97,7 @@ export default function SessionDetailPage({
   const [selectedAttachments, setSelectedAttachments] = useState<Array<{ id: string; name: string }>>([]);
   const [isSavingEmail, setIsSavingEmail] = useState(false);
   const [copiedNoteId, setCopiedNoteId] = useState<string | null>(null);
-  const [discardLeadId, setDiscardLeadId] = useState<string | null>(null);
+
   
   const { data: kbData } = useQuery<{ entries: any[]; files: any[] }>({
     queryKey: ["knowledge"],
