@@ -1,6 +1,6 @@
 "use client";
 
-
+import { useState, use, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, useUpdateSession } from "@/hooks/use-sessions";
 import { PageHeader } from "@/components/common/page-header";
@@ -61,6 +61,8 @@ interface Lead {
   contactLinkedin: string | null;
   qualificationScore: number | null;
   qualificationReason: string | null;
+  qualificationReport: string | null;
+  outreachStrategy: string | null;
   applyDirect?: boolean;
   pipelineStage: string;
   emails: LeadEmail[];
