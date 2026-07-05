@@ -132,6 +132,13 @@ export default function SessionDetailPage({
   const [customContext, setCustomContext] = useState<string>("");
   const [isUpdatingStrategy, setIsUpdatingStrategy] = useState(false);
 
+  // Outreach Hub states
+  const [isGeneratingPitch, setIsGeneratingPitch] = useState(false);
+  const [isSavingDrawerDraft, setIsSavingDrawerDraft] = useState(false);
+  const [isSendingDrawerEmail, setIsSendingDrawerEmail] = useState(false);
+  const [drawerSubject, setDrawerSubject] = useState("");
+  const [drawerBody, setDrawerBody] = useState("");
+
   useEffect(() => {
     if (activeLeadDetailsId && session?.leads) {
       const activeLead = session.leads.find((l: any) => l.id === activeLeadDetailsId);
@@ -150,6 +157,10 @@ export default function SessionDetailPage({
         setCustomContactLinkedin(activeLead.contactLinkedin || "");
         setCustomProbability(strat?.responseProbability ?? 50);
         setCustomContext(strat?.contextToReference || "");
+
+        const draft = activeLead.emails?.[0];
+        setDrawerSubject(draft?.subject || "");
+        setDrawerBody(draft?.body || "");
       }
     }
   }, [activeLeadDetailsId, session]);
@@ -1121,6 +1132,261 @@ export default function SessionDetailPage({
                             </div>
                           )}
                         </div>
+                      </div>
+
+                      {/* AI Outreach Action Hub */}
+                      <div className="space-y-4 pt-4 border-t border-border/50">
+                        <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider flex items-center gap-2">
+                          <Target className="w-4 h-4 text-text-secondary" />
+                          Outreach Action Hub
+                        </h4>
+
+                        {(() => {
+                          const draft = lead.emails?.[0];
+                          
+                          // Case A: No draft generated yet
+                          if (!draft && lead.pipelineStage === "generated") {
+                            return (
+                              <div className="p-5 border border-dashed border-border/80 rounded-2xl bg-surface-secondary/40 text-center space-y-3.5">
+                                <Sparkles className="w-6 h-6 text-accent-500 mx-auto" />
+                                <div>
+                                  <h5 className="text-xs font-bold text-text-primary">Personalized Pitch Not Generated</h5>
+                                  <p className="text-[10px] text-text-secondary mt-1 max-w-xs mx-auto">
+                                    Generate a personalized outbound note tailored to this target profile using your Knowledge Base context.
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    setIsGeneratingPitch(true);
+                                    try {
+                                      const res = await fetch(`/api/leads/${lead.id}/personalize`, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({})
+                                      });
+                                      if (res.ok) {
+                                        queryClient.invalidateQueries({ queryKey: ["session", session.id] });
+                                      }
+                                    } catch (err) {
+                                      console.error(err);
+                                    } finally {
+                                      setIsGeneratingPitch(false);
+                                    }
+                                  }}
+                                  disabled={isGeneratingPitch}
+                                  className="mx-auto px-4 py-2 bg-neutral-950 dark:bg-neutral-50 text-white dark:text-neutral-950 rounded-xl text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 select-none"
+                                >
+                                  {isGeneratingPitch ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                  )}
+                                  Generate Pitch Draft
+                                </button>
+                              </div>
+                            );
+                          }
+
+                          // Case B: Draft exists
+                          if (draft) {
+                            const isLinkedin = customChannel === "linkedin";
+                            const isCareersPage = customChannel === "careers_page";
+                            const isEmail = customChannel === "email";
+
+                            return (
+                              <div className="p-5 border border-border/50 rounded-2xl bg-surface-secondary/20 shadow-sm space-y-4">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent-500/10 text-accent-500 border border-accent-500/15 uppercase tracking-wider">
+                                    {isLinkedin ? "💬 LinkedIn Connect Note" : isCareersPage ? "💼 Cover Letter Pitch" : "📧 Email Draft"}
+                                  </span>
+                                  <span className="text-[10px] text-text-tertiary font-semibold capitalize">
+                                    Stage: {lead.pipelineStage}
+                                  </span>
+                                </div>
+
+                                {isEmail && (
+                                  <div className="space-y-1.5">
+                                    <label className="block text-[10px] font-semibold text-text-secondary uppercase">Email Subject</label>
+                                    <input
+                                      type="text"
+                                      value={drawerSubject}
+                                      onChange={(e) => setDrawerSubject(e.target.value)}
+                                      className="w-full text-xs bg-surface border border-border/80 focus:border-accent-500 focus:ring-4 focus:ring-accent-500/5 transition-all rounded-xl px-3.5 py-2 text-text-primary focus:outline-none font-medium"
+                                    />
+                                  </div>
+                                )}
+
+                                <div className="space-y-1.5">
+                                  <div className="flex justify-between items-center">
+                                    <label className="block text-[10px] font-semibold text-text-secondary uppercase">Pitch Body</label>
+                                    {isLinkedin && (
+                                      <span className={cn(
+                                        "text-[9px] font-bold",
+                                        drawerBody.length > 300 ? "text-danger-500" : "text-text-tertiary"
+                                      )}>
+                                        {drawerBody.length} / 300
+                                      </span>
+                                    )}
+                                  </div>
+                                  <textarea
+                                    value={drawerBody}
+                                    onChange={(e) => setDrawerBody(e.target.value)}
+                                    maxLength={isLinkedin ? 300 : undefined}
+                                    rows={isLinkedin ? 3 : 6}
+                                    className="w-full text-xs bg-surface border border-border/80 focus:border-accent-500 focus:ring-4 focus:ring-accent-500/5 transition-all rounded-xl px-3.5 py-2.5 text-text-primary focus:outline-none font-mono resize-none"
+                                  />
+                                </div>
+
+                                <div className="flex gap-2 justify-end pt-2">
+                                  {/* Save changes button */}
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      setIsSavingDrawerDraft(true);
+                                      try {
+                                        const res = await fetch(`/api/emails/${draft.id}`, {
+                                          method: "PATCH",
+                                          headers: { "Content-Type": "application/json" },
+                                          body: JSON.stringify({
+                                            subject: isEmail ? drawerSubject : draft.subject,
+                                            body: drawerBody
+                                          })
+                                        });
+                                        if (res.ok) {
+                                          queryClient.invalidateQueries({ queryKey: ["session", session.id] });
+                                        }
+                                      } catch (err) {
+                                        console.error(err);
+                                      } finally {
+                                        setIsSavingDrawerDraft(false);
+                                      }
+                                    }}
+                                    disabled={isSavingDrawerDraft || (isLinkedin && drawerBody.length > 300)}
+                                    className="px-4 py-2 border border-border hover:bg-surface-hover text-text-secondary hover:text-text-primary rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 select-none"
+                                  >
+                                    {isSavingDrawerDraft ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Save className="w-3.5 h-3.5" />
+                                    )}
+                                    Save Draft
+                                  </button>
+
+                                  {/* Primary Direct Action Buttons */}
+                                  {isEmail && (
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        setIsSendingDrawerEmail(true);
+                                        try {
+                                          // 1. Approve
+                                          const appRes = await fetch(`/api/emails/${draft.id}`, {
+                                            method: "PATCH",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({
+                                              status: "approved",
+                                              subject: drawerSubject,
+                                              body: drawerBody
+                                            })
+                                          });
+                                          
+                                          if (appRes.ok) {
+                                            // 2. Trigger session email send
+                                            const sendRes = await fetch(`/api/sessions/${session.id}/send`, {
+                                              method: "POST"
+                                            });
+                                            if (sendRes.ok) {
+                                              queryClient.invalidateQueries({ queryKey: ["session", session.id] });
+                                              setActiveLeadDetailsId(null);
+                                            }
+                                          }
+                                        } catch (err) {
+                                          console.error(err);
+                                        } finally {
+                                          setIsSendingDrawerEmail(false);
+                                        }
+                                      }}
+                                      disabled={isSendingDrawerEmail || !drawerSubject.trim() || !drawerBody.trim()}
+                                      className="px-4 py-2 bg-neutral-950 dark:bg-neutral-50 text-white dark:text-neutral-950 rounded-xl text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 select-none shadow-sm"
+                                    >
+                                      {isSendingDrawerEmail ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <Send className="w-3.5 h-3.5" />
+                                      )}
+                                      Approve & Send Email
+                                    </button>
+                                  )}
+
+                                  {isLinkedin && (
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        // 1. Copy to clipboard
+                                        navigator.clipboard.writeText(drawerBody);
+                                        
+                                        // 2. Mark lead as sent/approved in DB
+                                        try {
+                                          await fetch(`/api/leads/${lead.id}`, {
+                                            method: "PATCH",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ pipelineStage: "approved" })
+                                          });
+                                          queryClient.invalidateQueries({ queryKey: ["session", session.id] });
+                                        } catch (err) {
+                                          console.error(err);
+                                        }
+
+                                        // 3. Open LinkedIn profile
+                                        if (customContactLinkedin) {
+                                          window.open(customContactLinkedin, "_blank");
+                                        }
+                                        setActiveLeadDetailsId(null);
+                                      }}
+                                      disabled={drawerBody.length > 300 || !drawerBody.trim()}
+                                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 select-none shadow-sm"
+                                    >
+                                      Copy & Open LinkedIn
+                                    </button>
+                                  )}
+
+                                  {isCareersPage && (
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        // 1. Copy pitch to clipboard
+                                        navigator.clipboard.writeText(drawerBody);
+                                        
+                                        // 2. Mark lead as sent/approved in DB
+                                        try {
+                                          await fetch(`/api/leads/${lead.id}`, {
+                                            method: "PATCH",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ pipelineStage: "approved" })
+                                          });
+                                          queryClient.invalidateQueries({ queryKey: ["session", session.id] });
+                                        } catch (err) {
+                                          console.error(err);
+                                        }
+
+                                        // 3. Open Company Job Page
+                                        if (lead.companyWebsite) {
+                                          window.open(lead.companyWebsite, "_blank");
+                                        }
+                                        setActiveLeadDetailsId(null);
+                                      }}
+                                      disabled={!drawerBody.trim()}
+                                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 select-none shadow-sm"
+                                    >
+                                      Copy & Open Portal
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          }
+                        })()}
                       </div>
 
                       {/* Interactive Customizer Panel */}
