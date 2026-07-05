@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, use, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession, useUpdateSession } from "@/hooks/use-sessions";
 import { PageHeader } from "@/components/common/page-header";
@@ -105,6 +106,22 @@ export default function SessionDetailPage({
   const [leadsView, setLeadsView] = useState<"active" | "discarded">("active");
   // Active Lead Details Drawer state
   const [activeLeadDetailsId, setActiveLeadDetailsId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (activeLeadDetailsId) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [activeLeadDetailsId]);
   
   // Custom strategy form states
   const [customChannel, setCustomChannel] = useState<string>("");
