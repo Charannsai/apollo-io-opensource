@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "@/components/common/page-header";
@@ -13,6 +13,9 @@ import {
   HelpCircle,
   AlertCircle,
   ChevronRight,
+  Bot,
+  User,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeadRowSkeleton } from "@/components/common/skeletons";
@@ -36,26 +39,39 @@ interface AnalyzedQuery {
   contactPerson: string | null;
 }
 
+interface ChatMessage {
+  sender: "user" | "ai";
+  text: string;
+}
+
 export default function SearchPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [step, setStep] = useState<"input" | "questions" | "complete" | "scraping">("input");
   
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState("");
   
   const [analyzedQuery, setAnalyzedQuery] = useState<AnalyzedQuery | null>(null);
+  const [determinedSources, setDeterminedSources] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [outboundChannel, setOutboundChannel] = useState<"email" | "linkedin">("email");
 
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory, isLoading]);
+
   const examples = [
-    "I want to apply for remote Software Engineer jobs with 2 years experience (I am from India)",
-    "Find early-stage AI startups hiring full-stack engineer contractors",
-    "Find founders building SaaS products in Europe to pitch my React Native dev services",
+    "I want to find early-stage AI startups looking for full-stack engineers.",
+    "Find SaaS founders who may need an internal dashboard.",
+    "I want to pitch my AI automation services to healthcare companies.",
+    "Find companies that recently raised funding and may be hiring.",
   ];
 
   const handleStartSearch = async (e?: React.FormEvent) => {
@@ -64,6 +80,8 @@ export default function SearchPage() {
     
     setIsLoading(true);
     setErrorMsg("");
+    setStep("questions");
+    setChatHistory([{ sender: "user", text: query }]);
     
     try {
       const res = await fetch("/api/search/analyze", {
@@ -76,17 +94,22 @@ export default function SearchPage() {
       
       const data = await res.json();
       setAnalyzedQuery(data.analyzedQuery);
+      setDeterminedSources(data.determinedSources || []);
       
-      if (data.isComplete || data.followUpQuestions.length === 0) {
+      if (data.isComplete || !data.followUpQuestions || data.followUpQuestions.length === 0) {
         setStep("complete");
       } else {
-        setQuestions(data.followUpQuestions);
-        setCurrentQIndex(0);
-        setStep("questions");
+        const nextQ = data.followUpQuestions[0];
+        setCurrentQuestion(nextQ);
+        setChatHistory(prev => [
+          ...prev,
+          { sender: "ai", text: nextQ.question }
+        ]);
       }
     } catch (e) {
       console.error(e);
       setErrorMsg("Failed to connect to the analysis engine. Please try again.");
+      setStep("input");
     } finally {
       setIsLoading(false);
     }
@@ -94,50 +117,63 @@ export default function SearchPage() {
 
   const handleAnswerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentAnswer.trim()) return;
+    if (!currentAnswer.trim() || !currentQuestion) return;
 
+    const userAnsText = currentAnswer;
+    const activeQ = currentQuestion;
+    
+    // Add to chat history immediately
+    setChatHistory(prev => [...prev, { sender: "user", text: userAnsText }]);
+    
     const newAnswers = [
       ...answers,
-      { question: questions[currentQIndex].question, answer: currentAnswer }
+      { question: activeQ.question, answer: userAnsText }
     ];
     setAnswers(newAnswers);
     setCurrentAnswer("");
+    setIsLoading(true);
 
-    if (currentQIndex + 1 < questions.length) {
-      setCurrentQIndex(currentQIndex + 1);
-    } else {
-      // Re-evaluate with all answers
-      setIsLoading(true);
-      try {
-        const res = await fetch("/api/search/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, answers: newAnswers }),
-        });
-        
-        if (!res.ok) throw new Error("Failed to re-analyze query");
-        
-        const data = await res.json();
-        setAnalyzedQuery(data.analyzedQuery);
-        
-        if (data.isComplete || data.followUpQuestions.length === 0) {
+    try {
+      const res = await fetch("/api/search/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, answers: newAnswers }),
+      });
+      
+      if (!res.ok) throw new Error("Failed to re-analyze query");
+      
+      const data = await res.json();
+      setAnalyzedQuery(data.analyzedQuery);
+      setDeterminedSources(data.determinedSources || []);
+      
+      if (data.isComplete || !data.followUpQuestions || data.followUpQuestions.length === 0) {
+        // AI is satisfied
+        setChatHistory(prev => [
+          ...prev,
+          { sender: "ai", text: "Excellent, I have gathered all the context. Initializing research sources..." }
+        ]);
+        setTimeout(() => {
           setStep("complete");
-        } else {
-          setQuestions(data.followUpQuestions);
-          setCurrentQIndex(0);
-        }
-      } catch (e) {
-        console.error(e);
-        setErrorMsg("Failed to update query analysis. Please try again.");
-      } finally {
-        setIsLoading(false);
+        }, 1200);
+      } else {
+        const nextQ = data.followUpQuestions[0];
+        setCurrentQuestion(nextQ);
+        setChatHistory(prev => [
+          ...prev,
+          { sender: "ai", text: nextQ.question }
+        ]);
       }
+    } catch (e) {
+      console.error(e);
+      setErrorMsg("Failed to update query analysis. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleTriggerScraping = async () => {
     setStep("scraping");
-    setScrapeProgress("Initializing Apify scrapers...");
+    setScrapeProgress("Initializing AI Research Agent...");
     
     try {
       // 1. Create Session
@@ -146,10 +182,10 @@ export default function SearchPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: analyzedQuery?.role 
-            ? `${analyzedQuery.role} Outreach (${analyzedQuery.location || "Remote"})`
-            : "Conversational Search Outreach",
-          searchQuery: query + (answers.length > 0 ? "\n\nFollow-up Details:\n" + answers.map(a => `- ${a.question}: ${a.answer}`).join("\n") : ""),
-          description: `Discovered leads for ${analyzedQuery?.role} matching location: ${analyzedQuery?.location || "Remote"}.`,
+            ? `${analyzedQuery.role} Research (${analyzedQuery.location || "Remote"})`
+            : "Conversational Research Session",
+          searchQuery: query + (answers.length > 0 ? "\n\nResearch Context:\n" + answers.map(a => `- ${a.question}: ${a.answer}`).join("\n") : ""),
+          description: `Conversational lead discovery for ${analyzedQuery?.role || "targets"} in ${analyzedQuery?.industry || "industry"}. Channels: ${determinedSources.join(", ")}.`,
           outboundChannel
         }),
       });
@@ -158,7 +194,7 @@ export default function SearchPage() {
       const session = await sessionRes.json();
       
       // 2. Trigger scraping route which generates qualified leads
-      setScrapeProgress("Connecting with Apify to discover candidates...");
+      setScrapeProgress(`Searching determined channels: ${determinedSources.slice(0, 2).join(" & ")}...`);
       const scrapeRes = await fetch("/api/search/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -171,7 +207,7 @@ export default function SearchPage() {
       if (!scrapeRes.ok) throw new Error("Failed to fetch leads");
       const scrapeData = await scrapeRes.json();
       
-      setScrapeProgress(`AI qualifying ${scrapeData.count} leads...`);
+      setScrapeProgress(`Analyzing and qualifying ${scrapeData.count} discovered opportunities...`);
       // 3. Qualify leads
       await fetch("/api/search/qualify", {
         method: "POST",
@@ -185,8 +221,7 @@ export default function SearchPage() {
       router.push(`/sessions/${session.id}`);
     } catch (e) {
       console.error(e);
-      setErrorMsg("An error occurred during discovery. Moving to session page.");
-      // Redirect anyway so the user can inspect the session
+      setErrorMsg("An error occurred during discovery. Moving to sessions directory.");
       setTimeout(() => router.push("/sessions"), 2000);
     }
   };
@@ -194,34 +229,35 @@ export default function SearchPage() {
   const handleReset = () => {
     setQuery("");
     setAnswers([]);
-    setQuestions([]);
-    setCurrentQIndex(0);
+    setChatHistory([]);
+    setCurrentQuestion(null);
     setStep("input");
     setErrorMsg("");
     setAnalyzedQuery(null);
+    setDeterminedSources([]);
   };
 
   return (
-    <div className="min-h-[72vh] flex flex-col justify-center max-w-2xl mx-auto px-4">
+    <div className="min-h-[76vh] flex flex-col justify-center max-w-2xl mx-auto px-4 py-8">
       <AnimatePresence mode="wait">
         {step === "input" && (
           <motion.div
             key="input"
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0, y: -12 }}
             className="w-full flex flex-col items-center space-y-8"
           >
             {/* Centered logo and subheader */}
             <div className="flex flex-col items-center text-center space-y-3">
-              <div className="flex items-center justify-center w-11 h-11 rounded-2xl bg-surface border border-border shadow-[0_2px_10px_rgba(0,0,0,0.015)]">
-                <Search className="w-4.5 h-4.5 text-text-primary" />
+              <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-surface border border-border shadow-sm">
+                <Sparkles className="w-5 h-5 text-text-primary" />
               </div>
-              <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
-                Where should we search for leads?
+              <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
+                Conversational Lead Discovery
               </h1>
-              <p className="text-xs text-text-secondary max-w-sm">
-                Describe your target role, stack, experience, and location preferences in plain language.
+              <p className="text-sm text-text-secondary max-w-md">
+                Describe your business objective or outreach goal in natural language. Our AI will guide the process.
               </p>
             </div>
 
@@ -257,12 +293,12 @@ export default function SearchPage() {
 
             {/* Centered Pill Search Bar */}
             <form onSubmit={handleStartSearch} className="w-full space-y-4">
-              <div className="flex items-center gap-3 pl-6 pr-2.5 py-2.5 rounded-full border border-border bg-surface shadow-[0_4px_30px_rgba(0,0,0,0.01)] focus-within:ring-4 focus-within:ring-accent-500/5 focus-within:border-accent-500 transition-all duration-200">
+              <div className="flex items-center gap-3 pl-6 pr-2.5 py-3 rounded-full border border-border bg-surface shadow-sm focus-within:ring-4 focus-within:ring-accent-500/5 focus-within:border-accent-500 transition-all duration-200">
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Designation, tech stack, experience, location..."
+                  placeholder="Tell the AI who you want to reach out to..."
                   className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-tertiary border-none outline-none focus:outline-none focus:ring-0"
                   style={{ border: "none", outline: "none", boxShadow: "none" }}
                   autoFocus
@@ -270,13 +306,9 @@ export default function SearchPage() {
                 <button
                   type="submit"
                   disabled={!query.trim() || isLoading}
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-neutral-900 dark:bg-neutral-50 text-white dark:text-neutral-950 hover:opacity-95 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-neutral-900 dark:bg-neutral-50 text-white dark:text-neutral-950 hover:opacity-95 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
                 >
-                  {isLoading ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  )}
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
 
@@ -288,18 +320,20 @@ export default function SearchPage() {
               )}
             </form>
 
-            {/* Low-profile Horizontal Suggestions */}
-            <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-text-tertiary">
-              <span className="font-medium text-text-secondary">Try:</span>
-              {examples.map((ex, i) => (
-                <button
-                  key={i}
-                  onClick={() => setQuery(ex)}
-                  className="px-3.5 py-1.5 rounded-full border border-border bg-surface hover:bg-surface-hover text-text-secondary hover:text-text-primary transition-all duration-150 shadow-sm"
-                >
-                  {ex.split("hiring")[0].trim() || ex}
-                </button>
-              ))}
+            {/* Low-profile Suggestions */}
+            <div className="flex flex-col space-y-2.5 w-full max-w-lg">
+              <span className="text-xs font-semibold text-text-tertiary text-center uppercase tracking-wider">Example objectives:</span>
+              <div className="grid grid-cols-1 gap-2">
+                {examples.map((ex, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setQuery(ex)}
+                    className="p-3 text-left rounded-xl border border-border bg-surface hover:bg-surface-hover text-xs text-text-secondary hover:text-text-primary transition-all shadow-sm"
+                  >
+                    &ldquo;{ex}&rdquo;
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
@@ -307,34 +341,82 @@ export default function SearchPage() {
         {step === "questions" && (
           <motion.div
             key="questions"
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="w-full flex flex-col items-center space-y-6"
+            exit={{ opacity: 0, y: -12 }}
+            className="w-full flex flex-col h-[70vh] min-h-[450px]"
           >
-            <div className="w-full flex items-center justify-between text-xs text-text-tertiary">
-              <span>Clarification Questions</span>
-              <span>
-                {currentQIndex + 1} of {questions.length}
-              </span>
+            {/* Conversation Log Header */}
+            <div className="flex justify-between items-center pb-3 border-b border-border text-xs text-text-secondary shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-accent-500 animate-pulse" />
+                <span className="font-semibold text-text-primary">AI Research Agent Refinement</span>
+              </div>
+              <span>Conversational Mode</span>
             </div>
 
-            <div className="w-full p-5 rounded-2xl border border-border bg-surface text-center space-y-2">
-              <HelpCircle className="w-6 h-6 text-text-secondary mx-auto" />
-              <p className="text-sm text-text-primary font-medium">
-                {questions[currentQIndex]?.question}
-              </p>
+            {/* Dynamic Chat Log Area */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-0 pr-1">
+              {chatHistory.map((msg, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex gap-3 max-w-[85%] items-start text-sm",
+                    msg.sender === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center shrink-0 border",
+                      msg.sender === "user"
+                        ? "bg-surface border-border"
+                        : "bg-surface border-border text-accent-500"
+                    )}
+                  >
+                    {msg.sender === "user" ? (
+                      <User className="w-3.5 h-3.5 text-text-primary" />
+                    ) : (
+                      <Bot className="w-3.5 h-3.5" />
+                    )}
+                  </div>
+                  <div
+                    className={cn(
+                      "px-4 py-2.5 rounded-2xl leading-relaxed text-xs",
+                      msg.sender === "user"
+                        ? "bg-neutral-900 text-white dark:bg-neutral-50 dark:text-neutral-950 rounded-tr-none"
+                        : "bg-surface border border-border text-text-primary rounded-tl-none"
+                    )}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+
+              {isLoading && (
+                <div className="flex gap-3 max-w-[80%] items-start text-sm mr-auto">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border bg-surface border-border text-accent-500">
+                    <Bot className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="bg-surface border border-border text-text-tertiary px-4 py-2.5 rounded-2xl rounded-tl-none text-xs flex items-center gap-2">
+                    <RefreshCw className="w-3 h-3 animate-spin text-text-secondary" />
+                    <span>AI is formulating next clarification...</span>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
             </div>
 
-            <form onSubmit={handleAnswerSubmit} className="w-full space-y-4">
-              <div className="flex items-center gap-3 pl-5 pr-2.5 py-2.5 rounded-full border border-border bg-surface shadow-[0_4px_30px_rgba(0,0,0,0.01)] focus-within:ring-4 focus-within:ring-accent-500/5 focus-within:border-accent-500 transition-all duration-200">
+            {/* Answer Input Block */}
+            <form onSubmit={handleAnswerSubmit} className="pt-3 border-t border-border shrink-0 space-y-3">
+              <div className="flex items-center gap-3 pl-5 pr-2.5 py-2 rounded-full border border-border bg-surface shadow-sm focus-within:ring-4 focus-within:ring-accent-500/5 focus-within:border-accent-500 transition-all duration-200">
                 <input
                   type="text"
                   value={currentAnswer}
                   onChange={(e) => setCurrentAnswer(e.target.value)}
                   placeholder="Type your answer here..."
-                  className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-tertiary border-none outline-none focus:outline-none focus:ring-0"
+                  className="flex-1 bg-transparent text-xs text-text-primary placeholder:text-text-tertiary border-none outline-none focus:outline-none focus:ring-0"
                   style={{ border: "none", outline: "none", boxShadow: "none" }}
+                  disabled={isLoading}
                   autoFocus
                 />
                 <button
@@ -342,11 +424,7 @@ export default function SearchPage() {
                   disabled={!currentAnswer.trim() || isLoading}
                   className="flex items-center justify-center w-8 h-8 rounded-full bg-neutral-900 dark:bg-neutral-50 text-white dark:text-neutral-950 hover:opacity-95 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
                 >
-                  {isLoading ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  )}
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -356,10 +434,10 @@ export default function SearchPage() {
                   onClick={handleReset}
                   className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
                 >
-                  Restart Search
+                  Reset Research Session
                 </button>
-                <span className="text-xs text-text-tertiary">
-                  Press Enter to submit
+                <span className="text-[10px] text-text-tertiary">
+                  Press Enter to send answer
                 </span>
               </div>
             </form>
@@ -372,23 +450,22 @@ export default function SearchPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="w-full flex flex-col items-center space-y-6"
+            className="w-full flex flex-col space-y-6"
           >
             <div className="w-full flex flex-col items-center justify-center p-6 border border-dashed border-border rounded-2xl bg-surface-secondary">
-              <CheckCircle className="w-8 h-8 text-neutral-800 dark:text-neutral-200 mb-3 animate-bounce" />
+              <CheckCircle className="w-8 h-8 text-neutral-800 dark:text-neutral-200 mb-3" />
               <h3 className="text-sm font-semibold text-text-primary mb-1">
-                Target Profile Complete
+                Target Search Objective Clarified
               </h3>
               <p className="text-xs text-text-secondary text-center max-w-sm">
-                We gathered enough variables to configure our Apify target query
-                and Gemini qualification profile.
+                We successfully refined your search scope. AI will now search public sources automatically.
               </p>
             </div>
 
-            {/* Analyzed details */}
+            {/* Extracted Details */}
             <div className="w-full p-5 rounded-2xl border border-border bg-surface space-y-4">
               <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                Configured search parameters
+                Refined search parameters
               </h4>
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
@@ -398,7 +475,7 @@ export default function SearchPage() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-text-tertiary">Experience required</span>
+                  <span className="text-text-tertiary">Experience level</span>
                   <p className="font-semibold text-text-primary mt-0.5">
                     {analyzedQuery?.experience || "—"}
                   </p>
@@ -410,13 +487,37 @@ export default function SearchPage() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-text-tertiary">Industry</span>
+                  <span className="text-text-tertiary">Focus Domain</span>
                   <p className="font-semibold text-text-primary mt-0.5">
                     {analyzedQuery?.industry || "—"}
                   </p>
                 </div>
               </div>
             </div>
+
+            {/* Determined sources */}
+            {determinedSources.length > 0 && (
+              <div className="w-full p-5 rounded-2xl border border-border bg-surface space-y-3">
+                <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-text-tertiary" />
+                  Automatically Determined Channels
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {determinedSources.map((src, i) => (
+                    <span
+                      key={i}
+                      className="px-3.5 py-1.5 rounded-full border border-border bg-surface-secondary text-xs text-text-primary font-semibold flex items-center gap-1.5 shadow-sm"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 dark:bg-neutral-50 animate-pulse" />
+                      {src}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-text-tertiary italic">
+                  AI will query and combine listings and databases across these sources.
+                </p>
+              </div>
+            )}
 
             <div className="w-full flex gap-3 justify-end">
               <button
@@ -447,7 +548,7 @@ export default function SearchPage() {
               <RefreshCw className="w-8 h-8 text-neutral-400 dark:text-neutral-500 animate-spin" />
               <div>
                 <h3 className="text-sm font-medium text-text-primary">
-                  Discovering Opportunities
+                  AI Lead Discovery Active
                 </h3>
                 <p className="text-xs text-text-tertiary mt-1">
                   {scrapeProgress}
@@ -457,7 +558,7 @@ export default function SearchPage() {
             
             <div className="space-y-3">
               <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider block">
-                Populating lead pipelines...
+                Populating qualified leads...
               </span>
               <LeadRowSkeleton />
             </div>
