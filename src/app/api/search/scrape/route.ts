@@ -237,8 +237,8 @@ Respond with ONLY a JSON array (no markdown, no code blocks):
 
   const parsedText = await gemini.generateContent(parsePrompt, "Extract REAL company data from search results. Never fabricate information.");
   try {
-    const parsed = safeParseJson(parsedText, null);
-    if (!parsed || !Array.isArray(parsed)) throw new Error("Parsed content returned null or non-array");
+    const parsed = safeParseJson(parsedText, []) as any[];
+    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) throw new Error("Parsed content returned empty");
     
     // Post-process: validate each lead has a real company name and domain
     const validated = parsed.filter((lead: any) => {
