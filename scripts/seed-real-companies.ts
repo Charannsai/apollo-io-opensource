@@ -112,11 +112,11 @@ async function main() {
       if (rankCounter === 1) {
         return;
       }
-      // We skip the top 1,000 domains (like search engines/huge portals) and take the next 50,500
+      // We skip the top 1,000 domains (like search engines/huge portals) and take the next 500,500
       if (rankCounter <= 1001) {
         return;
       }
-      if (domains.length >= 50500) {
+      if (domains.length >= 500500) {
         rl.close();
         return;
       }
