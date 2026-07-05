@@ -932,22 +932,23 @@ export default function SessionDetailPage({
       />
 
       {/* Slide-over details drawer */}
-      <AnimatePresence>
-        {activeLeadDetailsId && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setActiveLeadDetailsId(null)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 cursor-pointer"
-            />
-            
-            {/* Drawer Panel */}
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
+      {mounted && typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {activeLeadDetailsId && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setActiveLeadDetailsId(null)}
+                className="fixed inset-0 bg-black/55 backdrop-blur-sm z-40 cursor-pointer"
+              />
+              
+              {/* Drawer Panel */}
+              <motion.div
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 220 }}
               className="fixed top-0 right-0 h-full w-full max-w-xl bg-surface border-l border-border/60 shadow-[0_0_50px_rgba(0,0,0,0.12)] z-50 overflow-y-auto flex flex-col p-8 space-y-8 pb-16"
@@ -979,7 +980,7 @@ export default function SessionDetailPage({
                 };
 
                 return (
-                  <div className="flex flex-col h-full justify-between min-w-0">
+                  <div className="flex flex-col min-w-0">
                     <div className="space-y-8">
                       {/* Drawer Header */}
                       <div className="flex items-start justify-between border-b border-border/50 pb-6">
@@ -1225,8 +1226,10 @@ export default function SessionDetailPage({
             </motion.div>
           </>
         )}
-      </AnimatePresence>
-    </motion.div>
+      </AnimatePresence>,
+      document.body
+    )}
+  </motion.div>
   );
 }
 
