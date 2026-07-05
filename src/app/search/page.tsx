@@ -261,36 +261,6 @@ export default function SearchPage() {
               </p>
             </div>
 
-            {/* Outbound Channel Selector Switch */}
-            <div className="flex justify-center select-none">
-              <div className="bg-surface-secondary border border-border p-1 rounded-full flex gap-1">
-                <button
-                  type="button"
-                  onClick={() => setOutboundChannel("email")}
-                  className={cn(
-                    "px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                    outboundChannel === "email"
-                      ? "bg-neutral-900 text-white dark:bg-neutral-50 dark:text-neutral-950 shadow-sm"
-                      : "text-text-secondary hover:text-text-primary"
-                  )}
-                >
-                  📧 Email Campaign
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOutboundChannel("linkedin")}
-                  className={cn(
-                    "px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                    outboundChannel === "linkedin"
-                      ? "bg-neutral-900 text-white dark:bg-neutral-50 dark:text-neutral-950 shadow-sm"
-                      : "text-text-secondary hover:text-text-primary"
-                  )}
-                >
-                  💬 LinkedIn Campaign
-                </button>
-              </div>
-            </div>
-
             {/* Centered Pill Search Bar */}
             <form onSubmit={handleStartSearch} className="w-full space-y-4">
               <div className="flex items-center gap-3 pl-6 pr-2.5 py-3 rounded-full border border-border bg-surface shadow-sm focus-within:ring-4 focus-within:ring-accent-500/5 focus-within:border-accent-500 transition-all duration-200">
